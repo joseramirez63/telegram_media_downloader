@@ -7,6 +7,9 @@ from nicegui import ui
 
 import db
 
+# Sentinel value displayed in the dropdown when no type filter is applied
+_ALL_TYPES_LABEL = "Todos"
+
 
 def build_history_tab(config: dict, open_media_fn, this_dir: str):
     """Build the History tab panel contents.
@@ -41,8 +44,8 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
 
             media_type_select = (
                 ui.select(
-                    ["Todos", "photo", "video", "document", "audio", "voice"],
-                    value="Todos",
+                    [_ALL_TYPES_LABEL, "photo", "video", "document", "audio", "voice"],
+                    value=_ALL_TYPES_LABEL,
                     label="Tipo",
                 )
                 .style("width: 140px;")
@@ -161,7 +164,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             sort_by = pagination["sortBy"]
             sort_desc = pagination["descending"]
             media_filter = media_type_select.value
-            if media_filter == "Todos":
+            if media_filter == _ALL_TYPES_LABEL:
                 media_filter = "All"
             records, total = db.get_recent_downloads(
                 limit=pagination["limit"],

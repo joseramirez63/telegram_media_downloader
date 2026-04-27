@@ -695,12 +695,10 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
     # Fetch and cache account information
     me = await client.get_me()
     if me is not None:
-        ACCOUNT_INFO["username"] = (
-            me.username or me.first_name or me.phone or "Desconocido"
-        )
+        ACCOUNT_INFO["username"] = me.username or me.first_name or me.phone or "Unknown"
         ACCOUNT_INFO["is_premium"] = bool(getattr(me, "premium", False))
     else:
-        ACCOUNT_INFO["username"] = "Desconocido"
+        ACCOUNT_INFO["username"] = "Unknown"
         ACCOUNT_INFO["is_premium"] = False
 
     # Extract chats format configuration
