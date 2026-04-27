@@ -1,4 +1,4 @@
-"""Execution tab UI for the Telegram Media Downloader Web UI."""
+"""Pestaña de ejecución de la interfaz web del Descargador de Medios de Telegram."""
 
 import logging
 import os
@@ -12,39 +12,44 @@ import media_downloader
 def build_execution_tab(
     config: dict, load_config_fn, chat_inputs: list, open_media_fn, this_dir: str
 ):
-    """Build the Execution tab panel contents.
+    """Construye los contenidos del panel de la pestaña Ejecución.
 
     Parameters
     ----------
     config : dict
-        Loaded configuration dictionary.
+        Diccionario de configuración cargado.
     load_config_fn : callable
-        Function to reload config from disk.
+        Función para recargar la configuración desde el disco.
     chat_inputs : list
-        List of chat input dicts (from config tab) to update last_read after run.
+        Lista de dicts de entrada de chats (de la pestaña de configuración)
+        para actualizar last_read tras la ejecución.
     open_media_fn : callable
-        ``open_media(url, filename)`` for the preview dialog.
+        ``open_media(url, filename)`` para el diálogo de vista previa.
     this_dir : str
-        Absolute path to the project root directory.
+        Ruta absoluta al directorio raíz del proyecto.
     """
     with ui.column().style("gap: 2px; margin-bottom: 28px;"):
         with ui.row().classes("items-center justify-between").style("width: 100%;"):
             with ui.column().style("gap: 2px;"):
-                ui.label("Execution").classes("section-title")
-                ui.label("Start downloading media from your configured chats.").classes(
-                    "section-subtitle"
+                ui.label("Ejecución").classes("section-title")
+                ui.label(
+                    "Inicia la descarga de medios desde tus chats configurados."
+                ).classes("section-subtitle")
+            with ui.row().classes("items-center").style("gap: 8px;"):
+                account_badge = ui.html("")
+                status_label = ui.html(
+                    '<span class="status-badge status-idle">'
+                    '<span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>'
+                    " Inactivo</span>"
                 )
-            status_label = ui.html(
-                '<span class="status-badge status-idle"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span> Idle</span>'
-            )
 
-    # ── Download Progress ──
+    # ── Progreso de Descarga ──
     with ui.element("div").classes("premium-card").style(
         "padding: 24px; margin-bottom: 20px;"
     ):
         with ui.row().classes("items-center").style("gap: 10px; margin-bottom: 16px;"):
             ui.icon("downloading", size="sm", color="primary")
-            ui.label("Active Downloads").style(
+            ui.label("Descargas Activas").style(
                 "font-size: 15px; font-weight: 600; color: var(--text-primary);"
             )
 
@@ -52,14 +57,14 @@ def build_execution_tab(
             "width: 100%; gap: 8px; max-height: 320px; overflow-y: auto; padding-right: 4px;"
         )
         ui.html(
-            '<div style="padding: 12px 0; text-align: center; color: var(--text-tertiary); font-size: 13px;" id="empty-state">No active downloads</div>'
+            '<div style="padding: 12px 0; text-align: center; color: var(--text-tertiary); font-size: 13px;" id="empty-state">Sin descargas activas</div>'
         )
 
-    # ── Terminal Logs (collapsible) ──
+    # ── Registros del Terminal (colapsable) ──
     with ui.element("div").classes("premium-card").style(
         "padding: 0; margin-bottom: 20px; overflow: hidden;"
     ):
-        with ui.expansion("Terminal Output", icon="terminal", value=False).style(
+        with ui.expansion("Salida del Terminal", icon="terminal", value=False).style(
             "width: 100%; font-size: 15px; font-weight: 600;"
         ).props("dense"):
             log_area = (
@@ -70,7 +75,7 @@ def build_execution_tab(
                 )
             )
 
-    # Custom logging handler
+    # Manejador de registros personalizado
     class UILogHandler(logging.Handler):
         def emit(self, record):
             try:
@@ -90,6 +95,25 @@ def build_execution_tab(
         status_label.content = (
             f'<span class="status-badge {style_class}">{dot} {text}</span>'
         )
+
+    def update_account_badge():
+        info = media_downloader.ACCOUNT_INFO
+        if not info:
+            account_badge.content = ""
+            return
+        username = info.get("username", "")
+        is_premium = info.get("is_premium", False)
+        if is_premium:
+            badge_html = (
+                f'<span class="status-badge" style="background:rgba(250,204,21,0.15);color:#b45309;gap:6px;">'
+                f'<span style="font-size:14px;">⭐</span> Premium · {username}</span>'
+            )
+        else:
+            badge_html = (
+                f'<span class="status-badge status-idle">'
+                f"👤 Gratis · {username}</span>"
+            )
+        account_badge.content = badge_html
 
     def ui_progress_hook(desc, current, total, file_path=None, media_type=None):
         if desc not in active_downloads:
@@ -155,7 +179,7 @@ def build_execution_tab(
                         with action_col:
                             fname = os.path.basename(file_path)
                             ui.button(
-                                "Open",
+                                "Abrir",
                                 on_click=lambda u=file_url, n=fname: open_media_fn(
                                     u, n
                                 ),
@@ -168,23 +192,25 @@ def build_execution_tab(
 
     async def run_downloader():
         if is_running["value"]:
-            ui.notify("Downloader is already running!", type="warning")
+            ui.notify("¡El descargador ya está en ejecución!", type="warning")
             return
         is_running["value"] = True
+        start_btn.set_enabled(False)
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
         try:
             log_area.clear()
             progress_container.clear()
             active_downloads.clear()
-            update_status("Running", "status-running")
-            ui.notify("Initializing Telegram Client...", type="info")
+            update_status("Ejecutando", "status-running")
+            ui.notify("Iniciando cliente de Telegram…", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
             fresh_config = load_config_fn()
             updated_config = await media_downloader.begin_import(
                 fresh_config, pagination_limit=100
             )
             media_downloader.update_config(updated_config)
+            update_account_badge()
             updated_chats = updated_config.get("chats", [])
             for i, c in enumerate(updated_chats):
                 if i < len(chat_inputs):
@@ -193,19 +219,19 @@ def build_execution_tab(
                 len(set(flist)) for flist in media_downloader.FAILED_IDS.values()
             )
             if total_failures > 0:
-                update_status(f"Done · {total_failures} errors", "status-warning")
+                update_status(f"Listo · {total_failures} errores", "status-warning")
                 log_area.push(
-                    f"Warning: {total_failures} files failed. Check config.yaml ids_to_retry."
+                    f"Advertencia: {total_failures} archivos fallaron. Revisa ids_to_retry en config.yaml."
                 )
                 ui.notify(
-                    f"Finished, but {total_failures} files failed.",
+                    f"Finalizado, pero {total_failures} archivos fallaron.",
                     type="warning",
                     position="top",
                 )
             else:
-                update_status("Complete", "status-success")
+                update_status("Completado", "status-success")
                 ui.notify(
-                    "Download complete!",
+                    "¡Descarga completada!",
                     type="positive",
                     position="top",
                 )
@@ -216,8 +242,11 @@ def build_execution_tab(
         finally:
             media_downloader.UI_PROGRESS_HOOK = None
             is_running["value"] = False
+            start_btn.set_enabled(True)
             main_logger.removeHandler(ui_logger)
 
-    ui.button("Start Download", on_click=run_downloader, icon="play_arrow").props(
-        'unelevated color="primary"'
-    ).style("width: 100%; height: 48px; font-size: 14px; font-weight: 600;")
+    start_btn = (
+        ui.button("Iniciar Descarga", on_click=run_downloader, icon="play_arrow")
+        .props('unelevated color="primary"')
+        .style("width: 100%; height: 48px; font-size: 14px; font-weight: 600;")
+    )
