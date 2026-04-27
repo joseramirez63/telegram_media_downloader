@@ -1,4 +1,4 @@
-"""Web UI for Telegram Media Downloader using NiceGUI."""
+"""Interfaz web del Descargador de Medios de Telegram usando NiceGUI."""
 
 import logging
 import os
@@ -30,7 +30,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @ui.page("/")
 def index():
-    ui.page_title("Telegram Media Downloader")
+    ui.page_title("Descargador de Medios de Telegram")
     config = load_config()
     ui.add_head_html(PREMIUM_CSS)
     dark_mode = ui.dark_mode()
@@ -58,12 +58,12 @@ def index():
                         ui.label("TG Downloader").style(
                             "font-size: 15px; font-weight: 700; letter-spacing: -0.025em; color: var(--text-primary); line-height: 1.2;"
                         )
-                        ui.label("Media Manager").style(
+                        ui.label("Gestor de Medios").style(
                             "font-size: 11px; font-weight: 500; color: var(--text-tertiary); letter-spacing: 0.02em;"
                         )
 
                 ui.html('<hr class="divider" style="margin: 0 0 8px 0;">')
-                ui.label("WORKSPACE").style(
+                ui.label("ESPACIO DE TRABAJO").style(
                     "font-size: 10px; font-weight: 600; color: var(--text-tertiary); "
                     "letter-spacing: 0.1em; padding: 0 16px 6px; text-transform: uppercase;"
                 )
@@ -89,25 +89,25 @@ def index():
                     return nav
 
                 nav_items = []
-                n1 = make_nav("Configuration", "tune", "config")
+                n1 = make_nav("Configuración", "tune", "config")
                 nav_items.append((n1, "config"))
-                n2 = make_nav("Execution", "play_circle_outline", "execution")
+                n2 = make_nav("Ejecución", "play_circle_outline", "execution")
                 nav_items.append((n2, "execution"))
-                n3 = make_nav("History", "schedule", "history")
+                n3 = make_nav("Historial", "schedule", "history")
                 nav_items.append((n3, "history"))
 
             # Bottom of sidebar
             with ui.column().style("gap: 8px; padding: 0 4px;"):
                 ui.html('<hr class="divider" style="margin: 0;">')
                 ui.button(
-                    "Take Tour", on_click=lambda: show_tour(), icon="school"
+                    "Ver Tour", on_click=lambda: show_tour(), icon="school"
                 ).props("flat dense color=grey-7").style(
                     "width: 100%; justify-content: flex-start; font-size: 13px; padding: 6px 12px;"
                 )
                 with ui.row().classes("items-center justify-between").style(
                     "padding: 4px 12px;"
                 ):
-                    ui.label("Dark mode").style(
+                    ui.label("Modo oscuro").style(
                         "font-size: 13px; font-weight: 500; color: var(--text-secondary);"
                     )
                     ui.switch(value=False, on_change=lambda: dark_mode.toggle()).props(
@@ -156,10 +156,10 @@ def index():
                             f'<iframe src="{url}" width="100%" height="600px" style="border:none;border-radius:12px;"></iframe>'
                         ).classes("w-full")
                     else:
-                        ui.label("Preview not available for this file type.").style(
-                            "color: white; padding: 40px; font-size: 16px;"
-                        )
-                        ui.link("Download / Open Raw File", url, new_tab=True).style(
+                        ui.label(
+                            "Vista previa no disponible para este tipo de archivo."
+                        ).style("color: white; padding: 40px; font-size: 16px;")
+                        ui.link("Descargar / Abrir Archivo", url, new_tab=True).style(
                             "color: #818cf8; font-size: 15px; text-decoration: underline;"
                         )
                 media_modal.open()
@@ -198,4 +198,4 @@ def index():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="Telegram Media Downloader", port=8080, dark=False, show=False)
+    ui.run(title="Descargador de Medios de Telegram", port=8080, dark=False, show=False)

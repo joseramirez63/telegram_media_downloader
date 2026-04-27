@@ -11,20 +11,16 @@ from typing import List, Optional, Tuple, Union
 from rich.logging import RichHandler
 from telethon import TelegramClient
 from telethon.errors import FileReferenceExpiredError
-from telethon.tl.types import (
-    Document,
-    Message,
-    MessageMediaDocument,
-    MessageMediaPhoto,
-    Photo,
-)
+from telethon.tl.types import (Document, Message, MessageMediaDocument,
+                               MessageMediaPhoto, Photo)
 from tqdm import tqdm
 
 import config_manager
 import db
 from utils.file_management import get_next_name, manage_duplicate_file
 from utils.log import LogFilter
-from utils.meta import APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION, print_meta
+from utils.meta import (APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION,
+                        print_meta)
 from utils.updates import check_for_updates
 
 logging.basicConfig(
@@ -45,6 +41,9 @@ CURRENT_BATCH_IDS: dict = {}
 
 # Global hook for Web UI to receive progress updates
 UI_PROGRESS_HOOK = None
+
+# Global account information populated after successful login
+ACCOUNT_INFO: dict = {}
 
 
 def update_config(config: dict):
@@ -692,6 +691,15 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
         lang_code=LANG_CODE,
     )
     await client.start()
+
+    # Fetch and cache account information
+    me = await client.get_me()
+    if me is not None:
+        ACCOUNT_INFO["username"] = me.username or me.first_name or me.phone or "Unknown"
+        ACCOUNT_INFO["is_premium"] = bool(getattr(me, "premium", False))
+    else:
+        ACCOUNT_INFO["username"] = "Unknown"
+        ACCOUNT_INFO["is_premium"] = False
 
     # Extract chats format configuration
     chats_config = config.get("chats", [])

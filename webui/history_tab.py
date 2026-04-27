@@ -1,4 +1,4 @@
-"""History tab UI for the Telegram Media Downloader Web UI."""
+"""Pestaña de historial de la interfaz web del Descargador de Medios de Telegram."""
 
 import os
 import urllib.parse
@@ -6,6 +6,9 @@ import urllib.parse
 from nicegui import ui
 
 import db
+
+# Sentinel value displayed in the dropdown when no type filter is applied
+_ALL_TYPES_LABEL = "Todos"
 
 
 def build_history_tab(config: dict, open_media_fn, this_dir: str):
@@ -21,10 +24,10 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
         Absolute path to the project root directory.
     """
     with ui.column().style("gap: 2px; margin-bottom: 28px;"):
-        ui.label("Download History").classes("section-title")
-        ui.label("Browse and preview your previously downloaded media files.").classes(
-            "section-subtitle"
-        )
+        ui.label("Historial de Descargas").classes("section-title")
+        ui.label(
+            "Navega y previsualiza tus archivos de medios descargados anteriormente."
+        ).classes("section-subtitle")
 
     with ui.element("div").classes("premium-card").style("padding: 24px;"):
 
@@ -33,7 +36,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             "gap: 12px; width: 100%; margin-bottom: 20px; align-items: center; flex-wrap: wrap;"
         ):
             search_input = (
-                ui.input(label="Search files…")
+                ui.input(label="Buscar archivos…")
                 .style("flex: 1; min-width: 200px;")
                 .props("outlined dense clearable")
             )
@@ -41,20 +44,20 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
 
             media_type_select = (
                 ui.select(
-                    ["All", "photo", "video", "document", "audio", "voice"],
-                    value="All",
-                    label="Type",
+                    [_ALL_TYPES_LABEL, "photo", "video", "document", "audio", "voice"],
+                    value=_ALL_TYPES_LABEL,
+                    label="Tipo",
                 )
                 .style("width: 140px;")
                 .props("outlined dense")
             )
             media_type_select.on("update:model-value", lambda: load_history())
 
-            ui.button("Search", on_click=lambda: load_history(), icon="search").props(
+            ui.button("Buscar", on_click=lambda: load_history(), icon="search").props(
                 'unelevated dense color="primary"'
             ).style("font-size: 13px;")
             ui.button(
-                "Refresh",
+                "Actualizar",
                 on_click=lambda: load_history(),
                 icon="refresh",
             ).props("flat dense color=grey-7").style("font-size: 13px;")
@@ -62,10 +65,10 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             def clear_history():
                 db.reset_history()
                 load_history()
-                ui.notify("History cleared.", type="info")
+                ui.notify("Historial eliminado.", type="info")
 
             ui.button(
-                "Clear All",
+                "Limpiar Todo",
                 on_click=clear_history,
                 icon="delete_outline",
             ).props("flat dense color=negative").style("font-size: 13px;")
@@ -74,7 +77,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
         columns = [
             {
                 "name": "timestamp",
-                "label": "Time",
+                "label": "Fecha/Hora",
                 "field": "download_timestamp",
                 "sortable": True,
                 "align": "left",
@@ -88,28 +91,28 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             },
             {
                 "name": "filename",
-                "label": "File Name",
+                "label": "Nombre de Archivo",
                 "field": "file_name",
                 "sortable": True,
                 "align": "left",
             },
             {
                 "name": "size",
-                "label": "Size (MB)",
+                "label": "Tamaño (MB)",
                 "field": "size_mb",
                 "sortable": True,
                 "align": "right",
             },
             {
                 "name": "media_type",
-                "label": "Type",
+                "label": "Tipo",
                 "field": "media_type",
                 "sortable": True,
                 "align": "left",
             },
             {
                 "name": "file_path",
-                "label": "Preview",
+                "label": "Vista Previa",
                 "field": "file_path",
                 "sortable": False,
                 "align": "left",
@@ -127,7 +130,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             """
             <q-td :props="props">
                 <ui-button v-if="props.row.file_url" @click="$parent.$emit('open_media', props.row)" style="background: none; border: none; padding: 0; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 500; text-decoration: none;">
-                    Open ↗
+                    Abrir ↗
                 </ui-button>
                 <span v-else style="color: var(--text-tertiary); font-size: 12px;">—</span>
             </q-td>
@@ -160,11 +163,14 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             offset = (pagination["page"] - 1) * pagination["limit"]
             sort_by = pagination["sortBy"]
             sort_desc = pagination["descending"]
+            media_filter = media_type_select.value
+            if media_filter == _ALL_TYPES_LABEL:
+                media_filter = "All"
             records, total = db.get_recent_downloads(
                 limit=pagination["limit"],
                 offset=offset,
                 search_item=search_input.value or "",
-                media_type=media_type_select.value,
+                media_type=media_filter,
                 sort_by=sort_by,
                 sort_desc=sort_desc,
             )
@@ -204,7 +210,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
                 )
             history_table.rows = rows
             page_label.set_text(
-                f"Page {pagination['page']} of {max(1, -(-total // pagination['limit']))} · {total} items"
+                f"Página {pagination['page']} de {max(1, -(-total // pagination['limit']))} · {total} elementos"
             )
 
         # ── Pagination ──
@@ -226,7 +232,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
             ui.button(icon="chevron_left", on_click=prev_page).props(
                 "flat dense round color=grey-7"
             )
-            page_label = ui.label("Page 1").style(
+            page_label = ui.label("Página 1").style(
                 "font-size: 13px; font-weight: 500; color: var(--text-tertiary); font-variant-numeric: tabular-nums;"
             )
             ui.button(icon="chevron_right", on_click=next_page).props(

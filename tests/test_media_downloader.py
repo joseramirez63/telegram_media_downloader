@@ -11,26 +11,15 @@ from unittest.mock import patch
 
 from telethon import TelegramClient
 from telethon.errors import FileReferenceExpiredError
-from telethon.tl.types import (
-    DocumentAttributeAudio,
-    DocumentAttributeFilename,
-    DocumentAttributeVideo,
-    MessageMediaDocument,
-    MessageMediaPhoto,
-)
+from telethon.tl.types import (DocumentAttributeAudio,
+                               DocumentAttributeFilename,
+                               DocumentAttributeVideo, MessageMediaDocument,
+                               MessageMediaPhoto)
 
-from media_downloader import (
-    _can_download,
-    _get_media_meta,
-    _is_exist,
-    _progress_callback,
-    begin_import,
-    download_media,
-    get_media_type,
-    main,
-    process_messages,
-    update_config,
-)
+from media_downloader import (_can_download, _get_media_meta, _is_exist,
+                              _progress_callback, begin_import, download_media,
+                              get_media_type, main, process_messages,
+                              update_config)
 
 MOCK_DIR: str = "/root/project"
 if platform.system() == "Windows":
@@ -234,6 +223,19 @@ class MockClient:
 
     async def start(self):
         pass
+
+    async def get_me(self):
+        mock_me = type(
+            "MockUser",
+            (),
+            {
+                "username": "testuser",
+                "premium": False,
+                "first_name": "Test",
+                "phone": None,
+            },
+        )()
+        return mock_me
 
     async def disconnect(self):
         pass

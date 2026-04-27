@@ -1,146 +1,147 @@
-"""Tutorial walkthrough for the Telegram Media Downloader Web UI."""
+"""Tutorial de navegación para la interfaz web del Descargador de Medios de Telegram."""
 
 from nicegui import ui
 
-# ── Tour step definitions ──
+# ── Definición de pasos del tour ──
 TOUR_STEPS = [
     {
         "icon": "👋",
-        "title": "Welcome to TG Downloader",
+        "title": "Bienvenido a TG Downloader",
         "body": (
-            "This tool helps you bulk-download media from Telegram chats and channels.\n\n"
-            "We'll walk you through **every section** step by step so you can get set up quickly.\n\n"
-            "Use **Next** to continue or **✕** to dismiss at any time."
+            "Esta herramienta te ayuda a descargar medios en masa desde chats y canales de Telegram.\n\n"
+            "Te guiaremos a través de **cada sección** paso a paso para que puedas configurarte rápidamente.\n\n"
+            "Usa **Siguiente** para continuar o **✕** para cerrar en cualquier momento."
         ),
     },
     {
         "icon": "🔑",
-        "title": "Step 1 · API Credentials",
+        "title": "Paso 1 · Credenciales de API",
         "page": "config",
         "body": (
-            "First, you need a Telegram API ID and Hash. Here's how:\n\n"
-            "1. Go to [my.telegram.org](https://my.telegram.org) and log in with your phone number\n"
-            "2. Click **API Development Tools**\n"
-            "3. Create a new application (any name works)\n"
-            "4. Copy the **API ID** (a number) and **API Hash** (a string)\n\n"
-            "Paste them into the **API ID** and **API Hash** fields in the first card. "
-            "The hash is hidden by default — click the eye icon to reveal it.\n\n"
-            "> ⚠️ Keep these credentials private. They are stored only in your local `config.yaml`."
+            "Primero necesitas un API ID y Hash de Telegram. Así se obtienen:\n\n"
+            "1. Ve a [my.telegram.org](https://my.telegram.org) e inicia sesión con tu número de teléfono\n"
+            "2. Haz clic en **Herramientas de Desarrollo de API**\n"
+            "3. Crea una nueva aplicación (cualquier nombre sirve)\n"
+            "4. Copia el **API ID** (un número) y el **API Hash** (una cadena)\n\n"
+            "Pégalos en los campos **API ID** y **API Hash** de la primera tarjeta. "
+            "El hash está oculto por defecto — haz clic en el ícono de ojo para verlo.\n\n"
+            "> ⚠️ Mantén estas credenciales en privado. Se almacenan solo en tu `config.yaml` local."
         ),
     },
     {
         "icon": "📂",
-        "title": "Step 2 · Download Directory",
+        "title": "Paso 2 · Directorio de Descarga",
         "page": "config",
         "body": (
-            "In the **Download Settings** card, set where your files will be saved:\n\n"
-            "- **Download Directory** — The folder path where all media will be downloaded. "
-            "Leave empty to use the app's own directory\n"
-            "- The path can be absolute (e.g. `/Users/you/Downloads/telegram`) or "
-            "relative to where the app is running\n\n"
-            "Make sure the directory exists and is writable!"
+            "En la tarjeta **Configuración de Descarga**, indica dónde se guardarán tus archivos:\n\n"
+            "- **Directorio de Descarga** — La carpeta donde se guardarán todos los medios. "
+            "Déjalo vacío para usar el directorio propio de la app\n"
+            "- La ruta puede ser absoluta (p.ej. `/Usuarios/tu/Descargas/telegram`) o "
+            "relativa al directorio desde donde se ejecuta la app\n\n"
+            "¡Asegúrate de que el directorio exista y tenga permisos de escritura!"
         ),
     },
     {
         "icon": "⚡",
-        "title": "Step 3 · Concurrency & Pacing",
+        "title": "Paso 3 · Concurrencia y Cadencia",
         "page": "config",
         "body": (
-            "These settings help you **avoid Telegram rate-limit bans**:\n\n"
-            "- **Max Concurrent** — How many files download simultaneously. "
-            "Start with `1`–`3` to be safe. Higher values are faster but riskier\n"
-            "- **Download Delay (sec)** — Wait time between starting each file. "
-            "Enter a single number like `2`, or a range like `1,5` for a random "
-            "delay between 1–5 seconds\n\n"
-            "> 💡 **Tip:** If you're downloading from a large channel for the first time, "
-            "use conservative settings (max 2 concurrent, 2–3 sec delay)."
+            "Estos ajustes te ayudan a **evitar bloqueos por límite de velocidad de Telegram**:\n\n"
+            "- **Máx. Concurrentes** — Cuántos archivos se descargan simultáneamente. "
+            "Empieza con `1`–`3` para mayor seguridad. Valores más altos son más rápidos pero más arriesgados\n"
+            "- **Retraso de Descarga (seg)** — Tiempo de espera entre el inicio de cada archivo. "
+            "Ingresa un número como `2`, o un rango como `1,5` para un retraso aleatorio "
+            "entre 1–5 segundos\n\n"
+            "> 💡 **Consejo:** Si es la primera vez que descargas de un canal grande, "
+            "usa configuraciones conservadoras (máx. 2 concurrentes, 2–3 seg de retraso)."
         ),
     },
     {
         "icon": "🎬",
-        "title": "Step 4 · Media Types",
+        "title": "Paso 4 · Tipos de Medios",
         "page": "config",
         "body": (
-            "Still in **Download Settings**, choose which media types to download:\n\n"
-            "- **photo** — Images and photos\n"
-            "- **video** — Video files\n"
-            "- **document** — PDFs, ZIPs, and other documents\n"
-            "- **audio** — Music and audio files\n"
-            "- **voice** — Voice messages and voice notes\n\n"
-            "Click the ✕ on any chip to remove a type, or type in the field to add one back.\n\n"
-            "Also check **Parallel Chats** if you want to download from multiple chats simultaneously."
+            "Aún en **Configuración de Descarga**, elige qué tipos de medios descargar:\n\n"
+            "- **photo** — Imágenes y fotos\n"
+            "- **video** — Archivos de video\n"
+            "- **document** — PDFs, ZIPs y otros documentos\n"
+            "- **audio** — Música y archivos de audio\n"
+            "- **voice** — Mensajes de voz y notas de voz\n\n"
+            "Haz clic en la ✕ de un chip para eliminarlo, o escribe en el campo para volver a añadirlo.\n\n"
+            "Marca también **Chats en Paralelo** si quieres descargar de varios chats a la vez."
         ),
     },
     {
         "icon": "💬",
-        "title": "Step 5 · Target Chats",
+        "title": "Paso 5 · Chats Objetivo",
         "page": "config",
         "body": (
-            "In the **Target Chats** card, add the chats you want to download from:\n\n"
-            "- Click **＋ Add Chat** to add a new chat entry\n"
-            "- **Chat ID** — The numeric ID of the chat/channel. You can find this using bots "
-            'like @userinfobot or by enabling "Show Chat ID" in Telegram Desktop settings\n'
-            "- **From / To Msg ID** — Optionally limit to a message range. `0` means no limit\n"
-            "- **Last Read Msg ID** — Tracks where the downloader left off. Updated automatically after each run\n\n"
-            "Expand **Advanced Overrides** to set a per-chat download directory or select specific media types for that chat only."
+            "En la tarjeta **Chats Objetivo**, añade los chats de los que descargar:\n\n"
+            "- Haz clic en **＋ Añadir Chat** para agregar una nueva entrada\n"
+            "- **Chat ID** — El ID numérico del chat/canal. Puedes encontrarlo con bots "
+            'como @userinfobot o activando "Mostrar ID de Chat" en Telegram Desktop\n'
+            "- **Último Msg ID Leído** — Registra dónde se detuvo el descargador. Se actualiza automáticamente tras cada ejecución\n\n"
+            "Expande **Opciones Avanzadas** para establecer un directorio de descarga por chat o seleccionar tipos de medios específicos para ese chat."
         ),
     },
     {
         "icon": "💾",
-        "title": "Step 6 · Save Your Config",
+        "title": "Paso 6 · Guardar la Configuración",
         "page": "config",
         "body": (
-            "When you're done configuring, scroll to the bottom and click **Save Configuration**.\n\n"
-            "This writes your settings to `config.yaml` in the app directory.\n\n"
-            "- **Save Configuration** — Writes all current settings to disk\n"
-            "- **Reload from Disk** — Discards unsaved changes and reloads from the file\n\n"
-            "> 📌 You **must** save before running a download — the downloader reads from the saved config file."
+            "Cuando termines de configurar, desplázate hacia abajo y haz clic en **Guardar Configuración**.\n\n"
+            "Esto escribe tus ajustes en `config.yaml` en el directorio de la app.\n\n"
+            "- **Guardar Configuración** — Escribe todos los ajustes actuales en disco\n"
+            "- **Recargar desde Disco** — Descarta los cambios no guardados y recarga desde el archivo\n\n"
+            "> 📌 **Debes** guardar antes de iniciar una descarga — el descargador lee desde el archivo de configuración guardado."
         ),
     },
     {
         "icon": "▶️",
-        "title": "Step 7 · Running Downloads",
+        "title": "Paso 7 · Ejecutar Descargas",
         "page": "execution",
         "body": (
-            "Switch to the **Execution** tab to start downloading:\n\n"
-            "1. Click the **Start Download** button at the bottom\n"
-            "2. The app connects to Telegram (you may need to authenticate on first run via the terminal)\n"
-            "3. Watch the **status badge** in the top-right — it shows:\n"
-            "   - 🔵 **Idle** — Ready to start\n"
-            "   - 🟡 **Running** — Download in progress\n"
-            "   - 🟢 **Complete** — Finished successfully\n"
-            "   - 🔴 **Error** — Something went wrong\n\n"
-            "The **Active Downloads** card shows real-time progress bars for each file being downloaded, "
-            "with file size and percentage. Completed files show a ✓ mark and an **Open** button."
+            "Cambia a la pestaña **Ejecución** para comenzar la descarga:\n\n"
+            "1. Haz clic en el botón **Iniciar Descarga** al final\n"
+            "2. La app se conecta a Telegram (puede que debas autenticarte en la primera ejecución vía terminal)\n"
+            "3. Observa el **indicador de estado** en la esquina superior derecha — muestra:\n"
+            "   - 🔵 **Inactivo** — Listo para iniciar\n"
+            "   - 🟡 **Ejecutando** — Descarga en progreso\n"
+            "   - 🟢 **Completado** — Finalizado con éxito\n"
+            "   - 🔴 **Error** — Algo salió mal\n\n"
+            "También verás junto al estado un badge con el tipo de cuenta: "
+            "**⭐ Premium** o **👤 Gratis**, junto con tu nombre de usuario.\n\n"
+            "La tarjeta **Descargas Activas** muestra barras de progreso en tiempo real para cada archivo, "
+            "con tamaño y porcentaje. Los archivos completados muestran ✓ y un botón **Abrir**."
         ),
     },
     {
         "icon": "🖥️",
-        "title": "Step 8 · Terminal Logs",
+        "title": "Paso 8 · Registros del Terminal",
         "page": "execution",
         "body": (
-            "Below Active Downloads, there's a collapsible **Terminal Output** section:\n\n"
-            "- Click the header to **expand/collapse** it\n"
-            "- Shows detailed logs: connection status, file-by-file progress, errors, and warnings\n"
-            "- Useful for debugging if downloads fail or stall\n"
-            "- Keeps the last 300 log lines — older entries are automatically removed\n\n"
-            "> 💡 **Tip:** If a download seems stuck, expand the terminal to check for "
-            "Telegram rate-limit warnings or authentication prompts."
+            "Debajo de Descargas Activas hay una sección colapsable de **Salida del Terminal**:\n\n"
+            "- Haz clic en el encabezado para **expandir/colapsar**\n"
+            "- Muestra registros detallados: estado de conexión, progreso archivo por archivo, errores y advertencias\n"
+            "- Útil para depurar si las descargas fallan o se quedan bloqueadas\n"
+            "- Mantiene las últimas 300 líneas de registro — las entradas más antiguas se eliminan automáticamente\n\n"
+            "> 💡 **Consejo:** Si una descarga parece atascada, expande el terminal para revisar "
+            "advertencias de límite de velocidad de Telegram o solicitudes de autenticación."
         ),
     },
     {
         "icon": "📋",
-        "title": "Step 9 · Download History",
+        "title": "Paso 9 · Historial de Descargas",
         "page": "history",
         "body": (
-            "The **History** tab shows every file that's been downloaded:\n\n"
-            "- **Search** — Type a filename to filter results instantly\n"
-            "- **Type filter** — Dropdown to show only photos, videos, documents, etc.\n"
-            "- **Column sorting** — Click any column header to sort by Time, Chat, Name, or Size\n"
-            "- **Pagination** — Navigate through pages at the bottom, 20 items per page\n"
-            "- **Open ↗** — Click to preview files right in the browser (images, videos, audio, PDFs)\n"
-            "- **Clear All** — Clears the history log (does not delete actual files)\n\n"
-            "You're all set! Happy downloading 🎉"
+            "La pestaña **Historial** muestra cada archivo que se ha descargado:\n\n"
+            "- **Buscar** — Escribe un nombre de archivo para filtrar resultados al instante\n"
+            "- **Filtro de tipo** — Desplegable para mostrar solo fotos, videos, documentos, etc.\n"
+            "- **Ordenar columnas** — Haz clic en cualquier encabezado de columna para ordenar por Fecha, Chat, Nombre o Tamaño\n"
+            "- **Paginación** — Navega por páginas al final, 20 elementos por página\n"
+            "- **Abrir ↗** — Haz clic para previsualizar archivos en el navegador (imágenes, videos, audio, PDFs)\n"
+            "- **Limpiar Todo** — Borra el registro del historial (no elimina los archivos reales)\n\n"
+            "¡Todo listo! Feliz descarga 🎉"
         ),
     },
 ]
@@ -209,12 +210,12 @@ def build_tour(current_page: dict, tab_panels, nav_items: list):
                 "width: 100%; justify-content: space-between; gap: 8px;"
             ):
                 tour_back_btn = (
-                    ui.button("Back", on_click=lambda: tour_navigate(-1))
+                    ui.button("Atrás", on_click=lambda: tour_navigate(-1))
                     .props("flat dense color=grey-7")
                     .style("font-size: 12px;")
                 )
                 tour_next_btn = (
-                    ui.button("Next", on_click=lambda: tour_navigate(1))
+                    ui.button("Siguiente", on_click=lambda: tour_navigate(1))
                     .props('unelevated dense color="primary"')
                     .style("font-size: 12px; padding: 4px 20px;")
                 )
@@ -253,9 +254,9 @@ def build_tour(current_page: dict, tab_panels, nav_items: list):
         is_last = tour_state["step"] == len(TOUR_STEPS) - 1
         tour_back_btn.set_visibility(not is_first)
         if is_last:
-            tour_next_btn.set_text("Finish")
+            tour_next_btn.set_text("Finalizar")
         else:
-            tour_next_btn.set_text("Next")
+            tour_next_btn.set_text("Siguiente")
 
     def tour_navigate(direction):
         new_step = tour_state["step"] + direction
