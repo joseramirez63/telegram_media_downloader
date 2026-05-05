@@ -28,6 +28,15 @@ A meta of last read/downloaded message is stored in the config file so that in s
 |Language | `Python 3.8 ` and above|
 |Download media types|  audio, document, photo, video, video_note, voice|
 
+## 🎉 Version 3.5.0 - Spanish UI & Account Badge
+
+### What's New:
+- **Interfaz en Español (Spanish UI)**: The entire Web UI has been fully translated into Spanish — all tabs (Configuration, Execution, History), labels, tooltips, tour steps, and status messages are now in Spanish.
+- **Account Type Badge**: The Execution tab now displays the logged-in Telegram account's username together with a **Premium** or **Free** badge, so you can instantly see which account is active.
+- **Start Button Disabled While Running**: The "Start" button is automatically disabled while a download session is in progress, preventing accidental double-clicks or duplicate runs.
+- **English Fallback in Core Module**: Core download logic always uses English internally, avoiding any locale-related issues regardless of the UI language.
+- **Media Type Filter Constant**: Introduced a named constant (`ALL_MEDIA_TYPES_SENTINEL`) for the internal media-type filter sentinel value, improving code readability and maintainability.
+
 ## 🎉 Version 3.4.0 - Interactive Web UI
 
 ### What's New:
