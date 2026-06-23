@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 from utils import __version__
 
@@ -39,5 +39,5 @@ setup(
         "Community": "https://t.me/tgmdnews",
         "Source": "https://github.com/Dineshkarthik/telegram_media_downloader",
     },
-    python_requires="~=3.8",
+    python_requires=">=3.8",
 )
