@@ -41,6 +41,15 @@ def get_next_name(file_path: str) -> str:
     )
 
 
+def _file_md5(file_path: str) -> str:
+    """Compute the MD5 hash of a file without leaking the file descriptor."""
+    hasher = md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 def manage_duplicate_file(file_path: str):
     """
     Check if a file is duplicate.
@@ -59,7 +68,6 @@ def manage_duplicate_file(file_path: str):
     str
         Absolute path of the duplicate managed file.
     """
-    # pylint: disable = R1732
     posix_path = pathlib.Path(file_path)
     file_base_name: str = "".join(posix_path.stem.split("-copy")[0])
     name_pattern: str = f"{posix_path.parent}/{file_base_name}*"
@@ -70,9 +78,9 @@ def manage_duplicate_file(file_path: str):
     )
     if file_path in old_files:
         old_files.remove(file_path)
-    current_file_md5: str = md5(open(file_path, "rb").read()).hexdigest()
+    current_file_md5: str = _file_md5(file_path)
     for old_file_path in old_files:
-        old_file_md5: str = md5(open(old_file_path, "rb").read()).hexdigest()
+        old_file_md5: str = _file_md5(old_file_path)
         if current_file_md5 == old_file_md5:
             os.remove(file_path)
             return old_file_path
