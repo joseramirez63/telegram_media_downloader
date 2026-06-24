@@ -32,6 +32,10 @@ def build_execution_tab(
         Holder dict with key ``"widget"`` pointing to the shared
         ``ui.log`` terminal widget.
     """
+
+    def _log_widget():
+        return log_area.get("widget") if isinstance(log_area, dict) else log_area
+
     # Shared state
     is_running = {"value": False}
     is_monitoring = {"value": False}
@@ -379,7 +383,7 @@ def build_execution_tab(
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
         try:
-            log_area.clear()
+            _log_widget().clear()
             progress_container.clear()
             active_downloads.clear()
             speed_byte_window.clear()
@@ -402,7 +406,7 @@ def build_execution_tab(
             )
             if total_failures > 0:
                 update_status(f"Done \u00b7 {total_failures} errors", "status-warning")
-                log_area.push(
+                _log_widget().push(
                     f"Warning: {total_failures} files failed. "
                     "Check config.yaml ids_to_retry."
                 )
@@ -420,7 +424,7 @@ def build_execution_tab(
                 )
         except Exception as e:
             update_status("Error", "status-error")
-            log_area.push(f"Error: {str(e)}")
+            _log_widget().push(f"Error: {str(e)}")
             ui.notify(f"Error: {str(e)}", type="negative", position="top")
         finally:
             media_downloader.UI_PROGRESS_HOOK = None
@@ -437,7 +441,7 @@ def build_execution_tab(
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
         try:
-            log_area.clear()
+            _log_widget().clear()
             progress_container.clear()
             active_downloads.clear()
             speed_byte_window.clear()
@@ -450,7 +454,7 @@ def build_execution_tab(
             client = await media_downloader.begin_monitor(fresh_config)
             monitor_client_ref["client"] = client
             stop_monitor_btn.style("display: block;")
-            log_area.push("Monitor active. Listening for new media...")
+            _log_widget().push("Monitor active. Listening for new media...")
             ui.notify(
                 "Monitor mode active. Listening for new messages...",
                 type="positive",
@@ -458,7 +462,7 @@ def build_execution_tab(
         except Exception as e:
             is_monitoring["value"] = False
             update_status("Error", "status-error")
-            log_area.push(f"Error: {str(e)}")
+            _log_widget().push(f"Error: {str(e)}")
             ui.notify(f"Error: {str(e)}", type="negative", position="top")
             main_logger.removeHandler(ui_logger)
 
