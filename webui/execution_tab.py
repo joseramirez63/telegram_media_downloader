@@ -360,6 +360,9 @@ def build_execution_tab(
         if is_running["value"]:
             ui.notify("Downloader is already running!", type="warning")
             return
+        if is_monitoring["value"]:
+            ui.notify("Stop monitoring before starting history download.", type="warning")
+            return
         is_running["value"] = True
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
@@ -418,6 +421,9 @@ def build_execution_tab(
     async def run_monitor():
         if is_monitoring["value"]:
             ui.notify("Monitor is already running!", type="warning")
+            return
+        if is_running["value"]:
+            ui.notify("Wait for history download to finish before monitoring.", type="warning")
             return
         is_monitoring["value"] = True
         main_logger = logging.getLogger("media_downloader")
