@@ -4,6 +4,25 @@ from nicegui import ui
 
 import media_downloader
 
+# Style constants
+_PROPS_DENSE = "outlined dense"
+_GAP_8 = "gap: 8px;"
+_COLOR_NEG = "color: var(--negative);"
+_COLOR_POS = "color: var(--positive);"
+_COLOR_SEC = "color: var(--text-secondary);"
+_FLAT_GREY = "flat dense color=grey-7"
+_FONT_13 = "font-size: 13px;"
+_TEXT_SUBTITLE = "font-size: 13px; color: var(--text-secondary); line-height: 1.6;"
+
+
+def _step_color(active: bool, past: bool) -> str:
+    """Return the CSS color for a wizard step indicator."""
+    if active:
+        return "var(--accent)"
+    if past:
+        return "var(--positive)"
+    return "var(--text-tertiary)"
+
 
 def build_setup_wizard(
     config: dict, save_config_fn, on_complete_fn, start_step: int = 1
@@ -42,13 +61,17 @@ def build_setup_wizard(
         "chat_id": (str(config.get("chat_id", "")) if config.get("chat_id") else ""),
     }
 
-    result_label_ref = {}
+    result_ref = {}
     step_indicators = {}
     content_area = None
     footer_area = None
 
     total_steps = max(start_step, 3) if start_step <= 3 else start_step
-    step_names = {1: "API Credentials", 2: "Phone Verification", 3: "Target Chat"}
+    step_names = {
+        1: "API Credentials",
+        2: "Phone Verification",
+        3: "Target Chat",
+    }
 
     with ui.dialog().props("persistent") as wizard_dialog, ui.card().style(
         "width: 480px; max-width: 90vw; border-radius: var(--radius-xl);"
@@ -71,20 +94,17 @@ def build_setup_wizard(
 
         # Progress indicators
         with ui.row().style(
-            "gap: 12px; justify-content: center; padding: 12px 24px 0 24px;"
+            "gap: 12px; justify-content: center;" " padding: 12px 24px 0 24px;"
         ):
             for n in range(1, total_steps + 1):
                 active = wizard_state["step"] == n
                 past = wizard_state["step"] > n
-                color = (
-                    "var(--accent)"
-                    if active
-                    else ("var(--positive)" if past else "var(--text-tertiary)")
-                )
+                color_ = _step_color(active, past)
                 label = f"\u25cf {step_names[n]}"
                 step_indicators[n] = ui.label(label).style(
-                    f"font-size: 11px; font-weight: {'600' if active else '400'};"
-                    f" color: {color}; letter-spacing: 0.02em;"
+                    f"font-size: 11px;"
+                    f" font-weight: {'600' if active else '400'};"
+                    f" color: {color_}; letter-spacing: 0.02em;"
                 )
 
         # Content area
@@ -94,15 +114,18 @@ def build_setup_wizard(
 
         # Result / error label
         with ui.row().style("justify-content: center; padding: 0 24px;"):
-            result_label_ref["el"] = ui.label("").style(
-                "font-size: 13px; font-weight: 500;"
-            )
+            result_ref["el"] = ui.label("").style(_FONT_13 + " font-weight: 500;")
 
         # Footer
         footer_area = ui.row().style(
-            "padding: 16px 24px; border-top: 1px solid var(--border);"
+            "padding: 16px 24px;"
+            " border-top: 1px solid var(--border);"
             " justify-content: space-between; width: 100%;"
         )
+
+    def _set_result(text: str, style_color: str):
+        result_ref["el"].set_text(text)
+        result_ref["el"].style(style_color)
 
     def _render():
         content_area.clear()
@@ -111,18 +134,15 @@ def build_setup_wizard(
         for n, lbl in step_indicators.items():
             active = wizard_state["step"] == n
             past = wizard_state["step"] > n
-            color = (
-                "var(--accent)"
-                if active
-                else ("var(--positive)" if past else "var(--text-tertiary)")
-            )
+            color_ = _step_color(active, past)
             lbl.style(
-                f"font-size: 11px; font-weight: {'600' if active else '400'};"
-                f" color: {color}; letter-spacing: 0.02em;"
+                f"font-size: 11px;"
+                f" font-weight: {'600' if active else '400'};"
+                f" color: {color_}; letter-spacing: 0.02em;"
             )
 
         step = wizard_state["step"]
-        result_label_ref["el"].set_text("")
+        result_ref["el"].set_text("")
 
         if step == 1:
             _render_step1()
@@ -131,23 +151,21 @@ def build_setup_wizard(
         elif step == 3:
             _render_step3()
 
-    # ── Step 1: API Credentials ──
+    # ── Step 1 ──
     def _render_step1():
         with content_area:
             ui.label(
                 "Enter your Telegram API credentials.\n"
                 "Get them at my.telegram.org \u2192 API Development Tools"
-            ).style(
-                "font-size: 13px; color: var(--text-secondary);" " line-height: 1.6;"
-            )
+            ).style(_TEXT_SUBTITLE)
             api_id_in = (
                 ui.number(
                     "API ID",
-                    value=wizard_state["api_id"] if wizard_state["api_id"] else None,
+                    value=(wizard_state["api_id"] if wizard_state["api_id"] else None),
                     format="%.0f",
                 )
                 .classes("w-full")
-                .props("outlined dense")
+                .props(_PROPS_DENSE)
             )
             api_hash_in = (
                 ui.input(
@@ -157,17 +175,17 @@ def build_setup_wizard(
                     password_toggle_button=True,
                 )
                 .classes("w-full")
-                .props("outlined dense")
+                .props(_PROPS_DENSE)
             )
 
         with footer_area:
-            ui.element("div")  # spacer
-            with ui.row().style("gap: 8px;"):
+            ui.element("div")
+            with ui.row().style(_GAP_8):
                 ui.button(
                     "Next",
                     on_click=lambda: _go_step1(api_id_in.value, api_hash_in.value),
                 ).props('unelevated color="primary"').style(
-                    "font-size: 13px; padding: 6px 24px;"
+                    _FONT_13 + " padding: 6px 24px;"
                 )
 
     def _go_step1(api_id_val, api_hash_val):
@@ -176,10 +194,10 @@ def build_setup_wizard(
         except (TypeError, ValueError):
             api_id_int = 0
         if not api_id_int or not str(api_hash_val).strip():
-            result_label_ref["el"].set_text(
-                "\u26a0 Both API ID and API Hash are required."
+            _set_result(
+                "\u26a0 Both API ID and API Hash are required.",
+                _COLOR_NEG,
             )
-            result_label_ref["el"].style("color: var(--negative);")
             return
         wizard_state["api_id"] = api_id_int
         wizard_state["api_hash"] = str(api_hash_val).strip()
@@ -188,12 +206,12 @@ def build_setup_wizard(
         wizard_state["step"] = 2
         _render()
 
-    # ── Step 2: Phone Verification ──
+    # ── Step 2 ──
     def _render_step2():
         nonlocal wizard_state
         with content_area:
             ui.label("We'll send a verification code to your phone.").style(
-                "font-size: 13px; color: var(--text-secondary); line-height: 1.6;"
+                _TEXT_SUBTITLE
             )
             phone_in = (
                 ui.input(
@@ -202,68 +220,62 @@ def build_setup_wizard(
                     placeholder="+521234567890",
                 )
                 .classes("w-full")
-                .props("outlined dense")
+                .props(_PROPS_DENSE)
             )
             with ui.row().style("gap: 8px; align-items: center;"):
                 code_in = (
                     ui.input("Verification code", placeholder="12345")
                     .classes("w-full")
-                    .props("outlined dense")
+                    .props(_PROPS_DENSE)
                 )
 
         with footer_area:
-            ui.button("Back", on_click=lambda: _go_back()).props(
-                "flat dense color=grey-7"
-            ).style("font-size: 13px;")
-            with ui.row().style("gap: 8px;"):
+            ui.button("Back", on_click=lambda: _go_back()).props(_FLAT_GREY).style(
+                _FONT_13
+            )
+            with ui.row().style(_GAP_8):
                 ui.button(
                     "Send Code",
                     on_click=lambda: _send_code(phone_in.value, code_in),
-                ).props("outline dense color=info").style("font-size: 13px;")
+                ).props("outline dense color=info").style(_FONT_13)
                 ui.button(
                     "Verify",
                     on_click=lambda: _verify_code(phone_in.value, code_in.value),
                 ).props('unelevated dense color="primary"').style(
-                    "font-size: 13px; padding: 4px 20px;"
+                    _FONT_13 + " padding: 4px 20px;"
                 )
 
     async def _send_code(phone, code_widget):
         phone = str(phone).strip()
         if not phone:
-            result_label_ref["el"].set_text(
-                "\u26a0 Enter a phone number in international format."
+            _set_result(
+                "\u26a0 Enter a phone number in international format.",
+                _COLOR_NEG,
             )
-            result_label_ref["el"].style("color: var(--negative);")
             return
         wizard_state["phone"] = phone
-        result_label_ref["el"].set_text("\u23f3 Sending code...")
-        result_label_ref["el"].style("color: var(--text-secondary);")
+        _set_result("\u23f3 Sending code...", _COLOR_SEC)
         result = await media_downloader.send_auth_code(
             wizard_state["api_id"], wizard_state["api_hash"], phone
         )
         if "error" in result:
-            result_label_ref["el"].set_text(f"\u274c {result['error']}")
-            result_label_ref["el"].style("color: var(--negative);")
+            _set_result(f"\u274c {result['error']}", _COLOR_NEG)
             return
         wizard_state["client"] = result["client"]
         wizard_state["phone_code_hash"] = result["phone_code_hash"]
-        result_label_ref["el"].set_text("\u2709 Code sent! Check your Telegram/sms.")
-        result_label_ref["el"].style("color: var(--positive);")
+        _set_result("\u2709 Code sent! Check your Telegram/sms.", _COLOR_POS)
         code_widget.run_method("focus")
 
     async def _verify_code(phone, code):
         phone = str(phone).strip()
         code = str(code).strip()
         if not phone or not code:
-            result_label_ref["el"].set_text("\u26a0 Phone and code are required.")
-            result_label_ref["el"].style("color: var(--negative);")
+            _set_result("\u26a0 Phone and code are required.", _COLOR_NEG)
             return
         if wizard_state["client"] is None:
-            result_label_ref["el"].set_text("\u26a0 Click 'Send Code' first.")
-            result_label_ref["el"].style("color: var(--negative);")
+            _set_result("\u26a0 Click 'Send Code' first.", _COLOR_NEG)
             return
-        result_label_ref["el"].set_text("\u23f3 Verifying...")
-        result_label_ref["el"].style("color: var(--text-secondary);")
+        _set_result("\u23f3 Verifying...", _COLOR_SEC)
         ok = await media_downloader.verify_auth_code(
             wizard_state["client"],
             phone,
@@ -272,19 +284,17 @@ def build_setup_wizard(
         )
         if ok:
             config["phone"] = phone
-            result_label_ref["el"].set_text("\u2705 Verified! Session saved.")
-            result_label_ref["el"].style("color: var(--positive);")
+            _set_result("\u2705 Verified! Session saved.", _COLOR_POS)
             wizard_state["step"] = 3
             _render()
         else:
-            result_label_ref["el"].set_text("\u274c Invalid code. Try again.")
-            result_label_ref["el"].style("color: var(--negative);")
+            _set_result("\u274c Invalid code. Try again.", _COLOR_NEG)
 
-    # ── Step 3: Target Chat ──
+    # ── Step 3 ──
     def _render_step3():
         with content_area:
             ui.label("Enter the chat or channel you want to download from.").style(
-                "font-size: 13px; color: var(--text-secondary); line-height: 1.6;"
+                _TEXT_SUBTITLE
             )
             chat_in = (
                 ui.input(
@@ -293,7 +303,7 @@ def build_setup_wizard(
                     placeholder="123456789 or @channelname",
                 )
                 .classes("w-full")
-                .props("outlined dense")
+                .props(_PROPS_DENSE)
             )
             ui.label(
                 "Tip: forward a message from the chat to @RawDataBot"
@@ -301,20 +311,20 @@ def build_setup_wizard(
             ).style("font-size: 11px; color: var(--text-tertiary);")
 
         with footer_area:
-            ui.button("Back", on_click=lambda: _go_back()).props(
-                "flat dense color=grey-7"
-            ).style("font-size: 13px;")
-            with ui.row().style("gap: 8px;"):
+            ui.button("Back", on_click=lambda: _go_back()).props(_FLAT_GREY).style(
+                _FONT_13
+            )
+            with ui.row().style(_GAP_8):
                 ui.button(
                     "Skip",
                     on_click=lambda: _finish(chat_in.value, skip=True),
-                ).props("flat dense color=grey-7").style("font-size: 13px;")
+                ).props(_FLAT_GREY).style(_FONT_13)
                 ui.button(
                     "Finish",
                     on_click=lambda: _finish(chat_in.value),
                 ).props(
                     'unelevated color="primary"'
-                ).style("font-size: 13px; padding: 6px 24px;")
+                ).style(_FONT_13 + " padding: 6px 24px;")
 
     def _go_back():
         wizard_state["step"] = max(1, wizard_state["step"] - 1)
@@ -335,7 +345,6 @@ def build_setup_wizard(
                     "ids_to_retry": [],
                 }
             ]
-        # Ensure default pacing settings exist
         if "download_delay" not in config:
             config["download_delay"] = [15, 30]
         if "max_concurrent_downloads" not in config:

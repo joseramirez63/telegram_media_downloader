@@ -460,6 +460,49 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
     return message.id
 
 
+def _resolve_download_delay(download_delay) -> Optional[float]:
+    """Parse and compute the download delay value.
+
+    Parameters
+    ----------
+    download_delay : float, list, or None
+        Delay configuration from config.
+
+    Returns
+    -------
+    Optional[float]
+        Computed delay in seconds, or None to skip.
+    """
+    if download_delay is None:
+        return None
+    if isinstance(download_delay, (list, tuple)):
+        if len(download_delay) != 2:
+            logger.warning(
+                "download_delay list must have exactly 2 elements "
+                "[min, max]; got %r. Skipping delay.",
+                download_delay,
+            )
+            return None
+        try:
+            lo, hi = float(download_delay[0]), float(download_delay[1])
+            return max(0.0, random.uniform(lo, hi))
+        except (TypeError, ValueError):
+            logger.warning(
+                "download_delay list %r contains non-numeric values; "
+                "skipping delay.",
+                download_delay,
+            )
+            return None
+    try:
+        return max(0.0, float(download_delay))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid download_delay value %r; skipping delay.",
+            download_delay,
+        )
+    return None
+
+
 async def process_messages(  # pylint: disable=too-many-positional-arguments
     client: TelegramClient,
     messages: List[Message],
@@ -505,36 +548,10 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
 
     async def _download_with_limit(message: Message) -> int:
         async with semaphore:
-            if download_delay is not None:
-                delay: Optional[float] = None
-                if isinstance(download_delay, (list, tuple)):
-                    if len(download_delay) != 2:
-                        logger.warning(
-                            "download_delay list must have exactly 2 elements "
-                            "[min, max]; got %r. Skipping delay.",
-                            download_delay,
-                        )
-                    else:
-                        try:
-                            lo, hi = float(download_delay[0]), float(download_delay[1])
-                            delay = max(0.0, random.uniform(lo, hi))
-                        except (TypeError, ValueError):
-                            logger.warning(
-                                "download_delay list %r contains non-numeric values; "
-                                "skipping delay.",
-                                download_delay,
-                            )
-                else:
-                    try:
-                        delay = max(0.0, float(download_delay))  # type: ignore[arg-type]
-                    except (TypeError, ValueError):
-                        logger.warning(
-                            "Invalid download_delay value %r; skipping delay.",
-                            download_delay,
-                        )
-                if delay is not None:
-                    logger.info("Waiting %.1fs before next download...", delay)
-                    await asyncio.sleep(delay)
+            delay = _resolve_download_delay(download_delay)
+            if delay is not None and delay > 0:
+                logger.info("Waiting %.1fs before next download...", delay)
+                await asyncio.sleep(delay)
             PENDING_IDS[chat_id] = PENDING_IDS.get(chat_id, 0) + 1
             msg_id = int(
                 await download_media(
@@ -769,31 +786,10 @@ async def register_monitor_handler(
         BACKLOG_ITERATED[chat_id] = BACKLOG_ITERATED.get(chat_id, 0) + 1
         try:
             async with semaphore:
-                if download_delay is not None:
-                    delay: float = 0.0
-                    if (
-                        isinstance(download_delay, (list, tuple))
-                        and len(download_delay) == 2
-                    ):
-                        try:
-                            lo, hi = (
-                                float(download_delay[0]),
-                                float(download_delay[1]),
-                            )
-                            delay = max(0.0, random.uniform(lo, hi))
-                        except (TypeError, ValueError):
-                            pass
-                    else:
-                        try:
-                            delay = max(0.0, float(download_delay))
-                        except (TypeError, ValueError):
-                            pass
-                    if delay > 0:
-                        logger.info(
-                            "Waiting %.1fs before next download...",
-                            delay,
-                        )
-                        await asyncio.sleep(delay)
+                delay = _resolve_download_delay(download_delay)
+                if delay is not None and delay > 0:
+                    logger.info("Waiting %.1fs before next download...", delay)
+                    await asyncio.sleep(delay)
                 await download_media(
                     client,
                     message,
