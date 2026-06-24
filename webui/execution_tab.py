@@ -42,7 +42,9 @@ def build_execution_tab(
     active_downloads = {}
     total_gb_label = None
     monitor_client_ref = {"client": None}
+    download_client_ref = {"client": None}
     stop_monitoring_fn = {"fn": None}
+    stop_download_fn = {"fn": None}
     empty_state_ref = {}
 
     # Speed meter state (global)
@@ -148,6 +150,20 @@ def build_execution_tab(
             icon="radar",
         ).props('unelevated color="info"').style(
             "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
+        )
+
+    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
+        stop_dl_btn = (
+            ui.button(
+                "Stop Download",
+                on_click=lambda: stop_download_fn["fn"](),
+                icon="stop",
+            )
+            .props('outline color="negative"')
+            .style(
+                "flex: 1; height: 40px; font-size: 13px;"
+                " font-weight: 500; display: none;"
+            )
         )
 
     with ui.row().style("gap: 8px; width: 100%;"):
@@ -361,7 +377,9 @@ def build_execution_tab(
             ui.notify("Downloader is already running!", type="warning")
             return
         if is_monitoring["value"]:
-            ui.notify("Stop monitoring before starting history download.", type="warning")
+            ui.notify(
+                "Stop monitoring before starting history download.", type="warning"
+            )
             return
         is_running["value"] = True
         main_logger = logging.getLogger("media_downloader")
@@ -378,8 +396,9 @@ def build_execution_tab(
             ui.notify("Initializing Telegram Client...", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
             fresh_config = load_config_fn()
+            stop_dl_btn.style("display: block;")
             updated_config = await media_downloader.begin_import(
-                fresh_config, pagination_limit=100
+                fresh_config, pagination_limit=100, client_ref=download_client_ref
             )
             media_downloader.update_config(updated_config)
             updated_chats = updated_config.get("chats", [])
@@ -415,6 +434,8 @@ def build_execution_tab(
             media_downloader.UI_PROGRESS_HOOK = None
             is_running["value"] = False
             main_logger.removeHandler(ui_logger)
+            stop_dl_btn.style("display: none;")
+            download_client_ref["client"] = None
             _show_empty_state()
             update_total_gb()
 
@@ -423,7 +444,9 @@ def build_execution_tab(
             ui.notify("Monitor is already running!", type="warning")
             return
         if is_running["value"]:
-            ui.notify("Wait for history download to finish before monitoring.", type="warning")
+            ui.notify(
+                "Wait for history download to finish before monitoring.", type="warning"
+            )
             return
         is_monitoring["value"] = True
         main_logger = logging.getLogger("media_downloader")
@@ -474,6 +497,17 @@ def build_execution_tab(
         ui.notify("Monitor stopped.", type="info")
 
     stop_monitoring_fn["fn"] = stop_monitoring
+
+    async def stop_download():
+        if download_client_ref["client"] is not None:
+            try:
+                await download_client_ref["client"].disconnect()
+            except Exception:
+                pass
+            download_client_ref["client"] = None
+        ui.notify("Download stopped. Progress saved.", type="info")
+
+    stop_download_fn["fn"] = stop_download
 
     # Timers
     ui.timer(0.5, update_speed_display)

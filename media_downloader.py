@@ -865,7 +865,7 @@ async def check_account_premium(config: dict):
 
 
 async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    config: dict, pagination_limit: int
+    config: dict, pagination_limit: int, client_ref: dict = None
 ) -> dict:
     """
     Create telethon client and initiate download.
@@ -876,6 +876,9 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
         Dict containing the config to create telethon client.
     pagination_limit: int
         Number of message to download asynchronously as a batch.
+    client_ref: dict, optional
+        If provided, ``client_ref["client"]`` is set to the connected
+        client so an external caller can disconnect it to stop early.
 
     Returns
     -------
@@ -903,6 +906,8 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
         lang_code=LANG_CODE,
     )
     await client.start()
+    if client_ref is not None:
+        client_ref["client"] = client
 
     # Extract chats format configuration
     chats_config = config.get("chats", [])
