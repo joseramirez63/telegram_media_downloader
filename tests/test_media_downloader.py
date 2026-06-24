@@ -1106,7 +1106,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
             ],
             "parallel_chats": False,
         }
-        _ = self.loop.run_until_complete(async_begin_import(conf, 100))
+        result = self.loop.run_until_complete(async_begin_import(conf, 100))
         self.assertEqual(mock_process_chat.call_count, 2)
         self.assertEqual(result, conf)
 

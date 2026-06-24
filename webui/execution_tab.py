@@ -10,7 +10,7 @@ from nicegui import ui
 import db
 import media_downloader
 
-_DISPLAY_NONE = _DISPLAY_NONE
+_DISPLAY_NONE = "display: none;"
 
 
 def build_execution_tab(  # NOSONAR

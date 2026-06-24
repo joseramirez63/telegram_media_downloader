@@ -7,7 +7,7 @@ from nicegui import ui
 
 import db
 
-_FONT_13 = _FONT_13
+_FONT_13 = "font-size: 13px;"
 
 
 def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
