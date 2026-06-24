@@ -166,7 +166,7 @@ def build_execution_tab(
                 empty_state_ref["el"].style("")
 
     # Buttons
-    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
+    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 4px;"):
         ui.button(
             "Start History Download",
             on_click=lambda: ui.timer(0.0, run_downloader, once=True),
@@ -180,6 +180,15 @@ def build_execution_tab(
             icon="radar",
         ).props('unelevated color="info"').style(
             "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
+        )
+    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
+        ui.label("Downloads backlog from the past").style(
+            "flex: 1; font-size: 10px; color: var(--text-tertiary);"
+            " text-align: center;"
+        )
+        ui.label("Listens for new incoming media").style(
+            "flex: 1; font-size: 10px; color: var(--text-tertiary);"
+            " text-align: center;"
         )
 
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
