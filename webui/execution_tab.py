@@ -250,7 +250,6 @@ def build_execution_tab(
             del last_known_bytes[desc]
 
         if desc not in active_downloads:
-            _update_empty_state()
             with progress_container:
                 row = (
                     ui.row()
@@ -291,6 +290,7 @@ def build_execution_tab(
                     False,  # completed
                 ]
                 download_order.append(desc)
+                _update_empty_state()
                 # Max 4 visible: hide oldest completed first
                 visible_count = sum(
                     1
