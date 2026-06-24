@@ -181,7 +181,7 @@ class MockEventLoop:
 
 class MockAsync:
     def __init__(self):
-        pass
+        """Mock asyncio module; no initialization needed."""
 
     def get_event_loop(self):
         return MockEventLoop()
