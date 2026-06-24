@@ -30,6 +30,10 @@ from webui.tour import build_tour
 logger = logging.getLogger("webui")
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Suppress Telethon connection cleanup noise on Python 3.13
+logging.getLogger("telethon").setLevel(logging.WARNING)
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
 
 @ui.page("/")
 def index():
@@ -134,7 +138,10 @@ def index():
             ).style("position: absolute; top: 16px; right: 40px; z-index: 10;")
 
             async def _check_account():
-                info = await media_downloader.check_account_premium(config)
+                try:
+                    info = await media_downloader.check_account_premium(config)
+                except Exception:
+                    return
                 if info is None:
                     return
                 name = info.get("first_name", "")
@@ -142,7 +149,7 @@ def index():
                 full = (name + " " + last).strip() or info.get("username", "?")
                 if info.get("premium"):
                     account_badge.content = (
-                        f'<span class="status-badge status-premium">'
+                        '<span class="status-badge status-premium">'
                         f"\u2b50 {full} (Premium)</span>"
                     )
                 else:
