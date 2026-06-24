@@ -1,24 +1,35 @@
 name: Code Quality
 
 on:
+  workflow_dispatch:
+
   pull_request:
     branches: [ master ]
     paths-ignore:
-      - 'README.md'
+      - README.md
+
   push:
     branches: [ master ]
     paths-ignore:
-      - 'README.md'
+      - README.md
 
 jobs:
   pre-commit:
     name: Linting
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: make dev_install
-    - uses: pre-commit/action@v3.0.0
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: make dev_install
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
