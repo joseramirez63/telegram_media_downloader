@@ -20,7 +20,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):
     this_dir : str
         Absolute path to the project root directory.
     """
-    with ui.column().style("gap: 2px; margin-bottom: 28px;"):
+    with ui.column().style("gap: 2px; margin-bottom: 28px; align-items: center;"):
         ui.label("Download History").classes("section-title")
         ui.label("Browse and preview your previously downloaded media files.").classes(
             "section-subtitle"

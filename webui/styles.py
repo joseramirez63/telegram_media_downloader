@@ -94,8 +94,8 @@ body { background: var(--surface-dim) !important; color: var(--text-primary) !im
 .premium-card:hover { box-shadow: var(--shadow-md); }
 
 /* ── Section Header ──────────────────────────────────────────── */
-.section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); line-height: 1.3; }
-.section-subtitle { font-size: 13px; font-weight: 400; color: var(--text-tertiary); line-height: 1.5; margin-top: 2px; }
+.section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); line-height: 1.3; text-align: center; }
+.section-subtitle { font-size: 13px; font-weight: 400; color: var(--text-tertiary); line-height: 1.5; margin-top: 2px; text-align: center; }
 
 /* ── Quasar Overrides ────────────────────────────────────────── */
 .q-field--outlined .q-field__control { border-radius: var(--radius-md) !important; transition: border-color var(--transition) !important; }

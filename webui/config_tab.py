@@ -22,7 +22,7 @@ def build_config_tab(config: dict, save_config_fn):
     chat_inputs = []
 
     # Page Header
-    with ui.column().style("gap: 2px; margin-bottom: 28px;"):
+    with ui.column().style("gap: 2px; margin-bottom: 28px; align-items: center;"):
         ui.label("Configuration").classes("section-title")
         ui.label(
             "Manage your Telegram API credentials, download preferences, and target chats."

@@ -75,19 +75,17 @@ def build_execution_tab(
             speed_label.set_text(s if s else "0 B/s")
 
     # Section Header + Status
-    with ui.column().style("gap: 2px; margin-bottom: 28px;"):
-        with ui.row().classes("items-center justify-between").style("width: 100%;"):
-            with ui.column().style("gap: 2px;"):
-                ui.label("Execution").classes("section-title")
-                ui.label(
-                    "Download or monitor media from your configured chats."
-                ).classes("section-subtitle")
-            status_label = ui.html(
-                '<span class="status-badge status-idle">'
-                '<span style="width:6px;height:6px;border-radius:50%;'
-                'background:currentColor;display:inline-block;"></span>'
-                " Idle</span>"
-            )
+    with ui.column().style("gap: 2px; margin-bottom: 28px; align-items: center;"):
+        ui.label("Execution").classes("section-title")
+        ui.label(
+            "Download or monitor media from your configured chats."
+        ).classes("section-subtitle")
+        status_label = ui.html(
+            '<span class="status-badge status-idle">'
+            '<span style="width:6px;height:6px;border-radius:50%;'
+            'background:currentColor;display:inline-block;"></span>'
+            " Idle</span>"
+        )
 
     def update_status(text, style_class):
         dot = (
@@ -104,7 +102,9 @@ def build_execution_tab(
             total_gb_label.set_text(db.format_bytes(total_bytes))
 
     # Metrics row
-    with ui.row().style("gap: 24px; margin-bottom: 20px; align-items: end;"):
+    with ui.row().style(
+        "gap: 32px; margin-bottom: 20px; align-items: end; justify-content: center;"
+    ):
         with ui.column().style("gap: 2px; align-items: center;"):
             speed_label = ui.label("\u2014").style(
                 "font-size: 18px; font-weight: 700;"
