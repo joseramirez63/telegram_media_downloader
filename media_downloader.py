@@ -768,25 +768,32 @@ async def register_monitor_handler(
         PENDING_IDS[chat_id] = PENDING_IDS.get(chat_id, 0) + 1
         BACKLOG_ITERATED[chat_id] = BACKLOG_ITERATED.get(chat_id, 0) + 1
         try:
-            if download_delay is not None:
-                delay: float = 0.0
-                if isinstance(download_delay, (list, tuple)) and len(download_delay) == 2:
-                    try:
-                        lo, hi = float(download_delay[0]), float(download_delay[1])
-                        delay = max(0.0, random.uniform(lo, hi))
-                    except (TypeError, ValueError):
-                        pass
-                else:
-                    try:
-                        delay = max(0.0, float(download_delay))
-                    except (TypeError, ValueError):
-                        pass
-                if delay > 0:
-                    logger.info(
-                        "Waiting %.1fs before next download...", delay
-                    )
-                    await asyncio.sleep(delay)
             async with semaphore:
+                if download_delay is not None:
+                    delay: float = 0.0
+                    if (
+                        isinstance(download_delay, (list, tuple))
+                        and len(download_delay) == 2
+                    ):
+                        try:
+                            lo, hi = (
+                                float(download_delay[0]),
+                                float(download_delay[1]),
+                            )
+                            delay = max(0.0, random.uniform(lo, hi))
+                        except (TypeError, ValueError):
+                            pass
+                    else:
+                        try:
+                            delay = max(0.0, float(download_delay))
+                        except (TypeError, ValueError):
+                            pass
+                    if delay > 0:
+                        logger.info(
+                            "Waiting %.1fs before next download...",
+                            delay,
+                        )
+                        await asyncio.sleep(delay)
                 await download_media(
                     client,
                     message,
