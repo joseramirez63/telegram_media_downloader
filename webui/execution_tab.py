@@ -212,8 +212,9 @@ def build_execution_tab(
                     .classes("dl-row")
                     .style("width: 100%; align-items: center; gap: 10px;")
                 )
-                row.style(row.style().get("") + " order: 0;")
+                row.style("order: 0;")
                 with row:
+                    name_label = ui.label(desc).style(
                         "font-size: 13px; font-weight: 500;"
                         " color: var(--text-secondary);"
                         " white-space: nowrap; overflow: hidden;"
@@ -282,7 +283,7 @@ def build_execution_tab(
             info_label.set_text(info_text)
 
             if current >= total:
-                row.style(row.style().get("") + " order: 1;")
+                row.style("order: 1;")
                 name_label.style(
                     "font-size: 13px; font-weight: 600;"
                     " color: var(--positive);"
@@ -290,9 +291,7 @@ def build_execution_tab(
                     " text-overflow: ellipsis; flex: 1; min-width: 0;"
                 )
                 if desc.startswith("Downloading "):
-                    name_label.set_text(
-                        desc.replace("Downloading ", "\u2713 ", 1)
-                    )
+                    name_label.set_text(desc.replace("Downloading ", "\u2713 ", 1))
                 info_label.set_text("Done")
                 info_label.style("color: var(--positive);")
 
