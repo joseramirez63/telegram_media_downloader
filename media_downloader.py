@@ -1068,7 +1068,7 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
     return config
 
 
-def main():  # pylint: disable=too-many-branches,too-many-statements
+def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
     """Main function of the downloader."""
     config = config_manager.load_config()
     mode = config.get("mode", "history")
