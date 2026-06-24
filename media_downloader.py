@@ -66,20 +66,17 @@ def update_config(config: dict):
         for chat_conf in chats_config:
             chat_id = chat_conf.get("chat_id")
             if chat_id and chat_id in DOWNLOADED_IDS and chat_id in FAILED_IDS:
-                chat_conf["ids_to_retry"] = (
-                    list(
-                        set(chat_conf.get("ids_to_retry", []))
-                        - set(DOWNLOADED_IDS[chat_id])
-                    )
-                    + FAILED_IDS[chat_id]
-                )
+                merged = set(chat_conf.get("ids_to_retry", []))
+                merged -= set(DOWNLOADED_IDS[chat_id])
+                merged |= set(FAILED_IDS[chat_id])
+                chat_conf["ids_to_retry"] = sorted(merged)
     else:
         chat_id = config.get("chat_id")
         if chat_id and chat_id in DOWNLOADED_IDS and chat_id in FAILED_IDS:
-            config["ids_to_retry"] = (
-                list(set(config.get("ids_to_retry", [])) - set(DOWNLOADED_IDS[chat_id]))
-                + FAILED_IDS[chat_id]
-            )
+            merged = set(config.get("ids_to_retry", []))
+            merged -= set(DOWNLOADED_IDS[chat_id])
+            merged |= set(FAILED_IDS[chat_id])
+            config["ids_to_retry"] = sorted(merged)
 
     config_manager.save_config(config)
     logger.info("Updated last read message_id to config file")
