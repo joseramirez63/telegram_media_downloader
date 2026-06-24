@@ -168,7 +168,7 @@ class MockVideoNote:
 
 class MockEventLoop:
     def __init__(self):
-        pass
+        """Mock event loop; no initialization needed."""
 
     def run_until_complete(self, *args, **kwargs):
         return {
@@ -230,13 +230,13 @@ class SimpleAttr:
 
 class MockClient:
     def __init__(self, *args, **kwargs):
-        pass
+        """Mock Telethon client; no initialization needed."""
 
     async def start(self):
-        pass
+        """Mock client.start(); no-op for tests."""
 
     async def disconnect(self):
-        pass
+        """Mock client.disconnect(); no-op for tests."""
 
     async def iter_messages(self, *args, **kwargs):
         items = [
