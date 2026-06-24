@@ -62,6 +62,25 @@ Key functions implementing these modes:
   and returns `{premium, first_name, last_name, username}`. Used by the Web UI
   badge.
 
+### `history_monitor` auto-switch behavior
+
+**CLI** (`main()` in `media_downloader.py`):
+1. Runs `begin_import()` for the full backlog.
+2. On success: saves config via `update_config()`, logs "Backlog complete.
+   Switching to Monitor mode...", calls `begin_monitor()`, then blocks via
+   `client.run_until_disconnected()`.
+3. On `KeyboardInterrupt` during backlog: skips monitor phase entirely,
+   saves config, and returns.
+
+**Web UI** (`run_downloader()` in `execution_tab.py`):
+1. Runs `begin_import()` via `run_downloader()`.
+2. On success, checks `load_config_fn().get("mode") == "history_monitor"`.
+3. If true: hides "Stop Download" button, sets `is_running = False`, calls
+   `run_monitor()` which registers handlers and shows "Stop Monitoring".
+4. The `switched_to_monitor` flag prevents the `finally` block from
+   removing the log handler or UI_PROGRESS_HOOK (needed by the monitor).
+5. Only "Stop Monitoring" remains visible after the switch.
+
 ## Web UI Architecture (`webui.py` + `webui/`)
 
 The UI is a single-page app using NiceGUI's declarative layout:
@@ -93,44 +112,76 @@ The UI is a single-page app using NiceGUI's declarative layout:
 
 ### Tab: Execution (`webui/execution_tab.py`)
 - **Account badge**: top-right, auto-detects Premium/Free via
-  `check_account_premium()`. Shows name and ⭐ for Premium.
-- **Status badge**: Idle / Running / Monitoring / Complete / Error with colored dot.
-- **Live metric cards** (centered, labeled below each value):
-  - `⬇ SPEED` — global aggregated download speed (sliding 3s window of byte deltas).
-  - `📥 ACTIVE / QUEUED` — files currently downloading (`PENDING_IDS`) vs
-    total backlog remaining (`BACKLOG_ITERATED - BACKLOG_DONE`).
-  - `📦 TOTAL` — cumulative GB downloaded (`db.get_total_downloaded_bytes()`).
-- **Active Downloads card**: max 4 rows without scroll, active files first
-  (`order: 0`), completed files pushed down (`order: 1`). Each row shows:
-  filename, progress bar, percentage + ETA (e.g. "73% · 2m left"). Completed
-  rows show ✓ and an "Open" button to preview the file.
-- **Buttons**:
-  - **Start History Download** — runs `begin_import`, shows progress, saves
-    on completion/stop.
-  - **Start Monitoring** — runs `begin_monitor`, keeps the client alive for
-    real-time downloads. Registers log handler.
-  - **Stop Download** — appears while history is running. Disconnects client
-    gracefully; `finally` block calls `update_config()` to save progress.
-  - **Stop Monitoring** — disconnects monitor client and cleans up.
+  `check_account_premium()`. Shows name and ⭐ for Premium. Runs once on page
+  load via `ui.timer(0.5, ..., once=True)`.
+- **Status badge**: centered below section title. States:
+  `status-idle` (grey), `status-running` (blue), `status-monitoring` (purple
+  with pulse animation), `status-success` (green), `status-error` (red).
+- **Live metric cards** (centered row, value on top, label below):
+  - `⬇ SPEED` — global aggregated download speed (sliding 5s window of byte
+    deltas from `UI_PROGRESS_HOOK`). Refreshes every 0.5s. Shows "0 B/s" when idle.
+  - `📥 ACTIVE / QUEUED` — format `X / Y`. X = `sum(PENDING_IDS.values())`
+    (files currently downloading). Y = `max(0, BACKLOG_ITERATED - BACKLOG_DONE)`
+    (backlog remaining). Refreshes every 0.5s. Shows "0 / 0" when idle.
+  - `📦 TOTAL` — `db.get_total_downloaded_bytes()` formatted via
+    `db.format_bytes()`. Refreshes every 1s.
+- **Active Downloads card**: max 4 visible rows. Active files appear first via
+  CSS `order: 0`, completed files pushed down via `order: 1`. Each entry is a
+  mutable **list** (not tuple) with indices: `[0]` row, `[1]` name_label,
+  `[2]` bar, `[3]` info_label, `[4]` action_col, `[5]` start_time,
+  `[6]` last_bytes, `[7]` visible (bool), `[8]` completed (bool).
+  - When >4 entries exist, the oldest **completed** entry is hidden first
+    (`display: none`). If all are active, the oldest active is hidden.
+  - Each row shows: filename (truncated), progress bar, percentage + ETA
+    (e.g. "73% · 2m left"). ETA computed from per-file elapsed time and
+    bytes transferred.
+  - Completed rows show ✓ green filename + "Done" + "Open" button.
+  - Empty state: "No active downloads" label shown/hidden via
+    `_update_empty_state()` which checks `any(entry[7] for entry in active_downloads.values())`.
+    **Important**: this function was bugged due to duplicate definitions
+    (the old `_hide_empty_state` and `_show_empty_state` were renamed but
+    not deleted, causing the second definition to override the first).
+- **Buttons** (with descriptive subtitles below):
+  - **Start History Download** — subtitle "Downloads backlog from the past".
+    Calls `run_downloader()` → `begin_import()` → saves on completion/stop.
+  - **Start Monitoring** — subtitle "Listens for new incoming media".
+    Calls `run_monitor()` → `begin_monitor()` → stores client ref for stop.
+  - **Stop Download** — appears during history download. Calls `stop_download()`
+    which disconnects `download_client_ref["client"]`. Progress is saved in
+    the `finally` block via `media_downloader.update_config(fresh)`.
+  - **Stop Monitoring** — appears during monitoring. Calls `stop_monitoring()`
+    which disconnects `monitor_client_ref["client"]` and cleans up log handler.
 - **Mutual exclusion**: history blocks monitor, monitor blocks history.
-  Duplicate clicks show a warning toast.
-- **State cleanup**: all global dicts (`PENDING_IDS`, `FAILED_IDS`,
-  `DOWNLOADED_IDS`, `PROCESSED_IDS`, `CURRENT_BATCH_IDS`, `BACKLOG_*`)
-  are cleared when starting any mode to prevent cross-mode leaks.
+  `run_downloader` checks `is_monitoring["value"]` and vice versa. Duplicate
+  clicks on the same mode show a warning toast ("already running").
+- **State cleanup on mode start**: ALL global dicts (`PENDING_IDS`,
+  `FAILED_IDS`, `DOWNLOADED_IDS`, `PROCESSED_IDS`, `CURRENT_BATCH_IDS`,
+  `BACKLOG_ITERATED`, `BACKLOG_DONE`) are `.clear()`ed when starting
+  history or monitor to prevent cross-mode data leaks.
+- **NiceGUI caveat**: Button references (DOM elements) cannot be captured in
+  closures because NiceGUI's auto-reload (WatchFiles) recreates the entire
+  UI tree on file changes, invalidating old element references. Mutable
+  containers (`dict`) like `stop_monitoring_fn` and `stop_download_fn` are
+  used to store callback references that survive reloads.
 
 ### Tab: History (`webui/history_tab.py`)
 - Search, type filter, column sorting, pagination (20 items/page).
 - **Total downloaded** label at top, auto-refreshes every 2s.
-- "Open ↗" preview via modal dialog (supports images, videos, audio, PDFs).
+- "Open" preview via modal dialog (supports images, videos, audio, PDFs).
 - "Clear All" resets the history DB.
 
 ### Tab: Terminal (`webui.py` inline)
-- 4th sidebar nav item, rendered inside a `ui.tab_panel`.
+- 4th sidebar nav item ("Terminal" with `terminal` icon), rendered inside a
+  `ui.tab_panel`.
 - `ui.log` widget (500 lines max) receives real-time log output from both
   history and monitor modes via a `UILogHandler` attached to the
   `media_downloader` logger.
-- `log_area_holder` dict pattern passes the `ui.log` reference to the
-  Execution tab so it can push logs from async callbacks.
+- `log_area_holder` dict pattern: `log_area_holder["widget"]` is set in
+  the Terminal tab's `tab_panel` and passed to `build_execution_tab()`.
+  The `UILogHandler.emit()` accesses `log_area.get("widget")` to push messages.
+  This pattern exists because NiceGUI renders columns left-to-right, so
+  `log_area` must be defined before it's used — the holder provides indirection.
+- Section header centered like other tabs.
 
 ### Tour (`webui/tour.py`)
 - 11-step interactive walkthrough covering all features.
@@ -138,15 +189,20 @@ The UI is a single-page app using NiceGUI's declarative layout:
 - Steps: Welcome → API Credentials → Download Directory → Concurrency &
   Pacing → Media Types → Target Chats → Save Config → Execution Modes →
   Running Downloads → Live Metrics → Terminal Tab → Download History.
+- Navigates to the relevant sidebar tab (`config`, `execution`, `history`,
+  `terminal`) for each step.
 
 ### Styles (`webui/styles.py`)
-- CSS design system with light/dark mode tokens.
-- `.premium-card`, `.section-title`, `.section-subtitle`, `.sidebar`,
-  `.nav-item`, `.terminal-log`, `.dl-row`, `.status-badge`, etc.
-- Status variants: `status-idle`, `status-running`, `status-monitoring`,
-  `status-success`, `status-error`, `status-warning`, `status-premium`,
-  `status-free`.
-- Pulse animation for monitoring status: `@keyframes pulse-monitor`.
+- CSS design system with light/dark mode tokens (`--surface`, `--accent`,
+  `--text-primary`, etc.).
+- `.premium-card`, `.section-title` (centered), `.section-subtitle` (centered),
+  `.sidebar`, `.nav-item`, `.terminal-log`, `.dl-row`, `.status-badge`, etc.
+- Status variants: `status-idle`, `status-running`, `status-monitoring`
+  (with `@keyframes pulse-monitor`), `status-success`, `status-error`,
+  `status-warning`, `status-premium`, `status-free`.
+- Telethon noise suppression: `logging.getLogger("telethon").setLevel(WARNING)`,
+  `logging.getLogger("asyncio").setLevel(CRITICAL)`, plus `sys.unraisablehook`
+  override to silence `GeneratorExit` exceptions from Python 3.13.
 
 ## Database (`db.py`)
 
@@ -158,17 +214,37 @@ SQLite database at `downloads.sqlite3` (relative to `db.py`).
 - Key functions:
   - `record_download()` — called from `download_media` on success.
   - `get_recent_downloads()` — with search, filter, sort, pagination.
-  - `get_total_downloaded_bytes()` — SUM(file_size) for the "Total GB" metric.
-  - `format_bytes(n)` — human-readable (B → KB → MB → GB → TB).
+  - `get_total_downloaded_bytes()` — `SELECT COALESCE(SUM(file_size), 0)`;
+    returns `int`. Used for the "Total GB" metric.
+  - `format_bytes(n)` — human-readable (B → KB → MB → GB → TB). Handles
+    `n <= 0` as "0 B".
   - `reset_history()` — clears all records.
 
 ## File Management (`utils/file_management.py`)
 
-- `_file_md5()` — computes **SHA-256** hash (previously MD5; changed for
-  security linter compliance) in 8KB chunks, properly using `with open(...)`.
+- `_file_md5()` — computes **SHA-256** hash (changed from MD5 for security
+  linter compliance). Reads in 8KB chunks, properly using `with open(...)`.
+  Function name kept as `_file_md5` for backward compatibility with tests.
 - `get_next_name()` — generates `-copyN` suffixes to avoid overwrites.
-- `manage_duplicate_file()` — compares hashes of files matching `-copy*`
-  pattern; deletes the newer file if identical to an older copy.
+- `manage_duplicate_file()` — compares SHA-256 hashes of files matching
+  `-copy*` pattern; deletes the newer file if identical to an older copy.
+
+## Config & Data Integrity
+
+### `ids_to_retry` deduplication
+`update_config()` uses Python `set` operations (`union`, `difference`) to
+merge `FAILED_IDS` into `ids_to_retry` without duplicates. Results are
+`sorted()` for readable config files.
+
+### Deleted message handling
+When `client.get_messages(chat_id, ids=ids_to_retry)` returns `None` entries
+(for messages deleted from Telegram), `process_chat` skips them with
+`if message is None: continue`. Additionally, `chat_conf["ids_to_retry"]`
+is updated to remove orphan IDs: `[m.id for m in skipped_messages if m is not None]`.
+
+### `download_delay` default
+Changed from `null` to `[15, 30]` in `config.yaml.example` to provide
+safer rate-limiting out of the box.
 
 ## Key Principles & Conventions
 
@@ -184,11 +260,16 @@ SQLite database at `downloads.sqlite3` (relative to `db.py`).
 5. **Cross-mode Isolation**: All global state dicts are `.clear()`ed when
    starting a new mode to prevent leaks between history and monitor runs.
 6. **No Duplicate Counting**: `PENDING_IDS` and `BACKLOG_DONE` are only
-   incremented in the callers (`_download_with_limit` for history mode,
-   `_handler` for monitor mode) — never in `download_media` itself.
+   incremented in the callers (`_download_with_limit` → `process_messages`
+   for history mode, `_handler` → `register_monitor_handler` for monitor
+   mode) — **never** in `download_media` itself. This prevents double-counting
+   when both the caller and callee increment the same counter.
 7. **Security**: SHA-256 for file deduplication. `config.yaml` and
    `*.session` files are in `.gitignore`. `api_hash` is masked by default
    in the Web UI.
+8. **NiceGUI Closures**: Never capture DOM element references in closures
+   that survive page reloads. Use mutable containers (`dict["fn"]`) for
+   callback references instead.
 
 ## Development & Testing
 
@@ -203,6 +284,11 @@ SQLite database at `downloads.sqlite3` (relative to `db.py`).
   - `test_pacing.py` — download delay and concurrency (4 tests).
   - `test_config_manager.py` — YAML load/save (8 tests).
   - `utils/` tests — file management, logging, meta, updates.
+- **Test isolation**: `tests/conftest.py` redirects `db.DB_PATH` to a
+  temporary file to prevent test runs from touching the real database.
+  `test_monitor.py` classes create fresh `asyncio` event loops in `setUp()`
+  to avoid conflicts with `test_media_downloader.py`'s `tearDownClass` loop
+  closure on Python 3.13.
 - App version in `utils/__init__.py`.
 
 ## Dependencies
