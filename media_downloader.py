@@ -749,6 +749,9 @@ async def register_monitor_handler(
     chat_id = chat_conf["chat_id"]
     settings = _resolve_monitor_settings(global_config, chat_conf)
     semaphore = asyncio.Semaphore(max(1, settings["max_concurrent_downloads"]))
+    download_delay = chat_conf.get(
+        "download_delay", global_config.get("download_delay", [15, 30])
+    )
     PENDING_IDS.setdefault(chat_id, 0)
     BACKLOG_ITERATED.setdefault(chat_id, 0)
     BACKLOG_DONE.setdefault(chat_id, 0)
@@ -765,6 +768,24 @@ async def register_monitor_handler(
         PENDING_IDS[chat_id] = PENDING_IDS.get(chat_id, 0) + 1
         BACKLOG_ITERATED[chat_id] = BACKLOG_ITERATED.get(chat_id, 0) + 1
         try:
+            if download_delay is not None:
+                delay: float = 0.0
+                if isinstance(download_delay, (list, tuple)) and len(download_delay) == 2:
+                    try:
+                        lo, hi = float(download_delay[0]), float(download_delay[1])
+                        delay = max(0.0, random.uniform(lo, hi))
+                    except (TypeError, ValueError):
+                        pass
+                else:
+                    try:
+                        delay = max(0.0, float(download_delay))
+                    except (TypeError, ValueError):
+                        pass
+                if delay > 0:
+                    logger.info(
+                        "Waiting %.1fs before next download...", delay
+                    )
+                    await asyncio.sleep(delay)
             async with semaphore:
                 await download_media(
                     client,
