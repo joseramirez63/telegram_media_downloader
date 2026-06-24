@@ -437,6 +437,9 @@ def build_execution_tab(
             stop_dl_btn.style("display: none;")
             download_client_ref["client"] = None
             _show_empty_state()
+            # Save progress even on error/stop
+            fresh = load_config_fn()
+            media_downloader.update_config(fresh)
             update_total_gb()
 
     async def run_monitor():
