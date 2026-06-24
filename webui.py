@@ -33,6 +33,12 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 # Suppress Telethon connection cleanup noise on Python 3.13
 logging.getLogger("telethon").setLevel(logging.WARNING)
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+import sys
+import warnings
+warnings.filterwarnings("ignore", message=".*coroutine ignored GeneratorExit.*")
+if hasattr(sys, "unraisablehook"):
+    _original_hook = sys.unraisablehook
+    sys.unraisablehook = lambda args: None if "GeneratorExit" in str(getattr(args, "exc_value", "")) else _original_hook(args)
 
 
 @ui.page("/")
