@@ -46,6 +46,10 @@ CURRENT_BATCH_IDS: dict = {}
 # Messages with media received in monitor mode but not yet downloaded.
 PENDING_IDS: dict = {}
 
+# History mode backlog tracking: messages iterated vs processed per chat.
+BACKLOG_ITERATED: dict = {}
+BACKLOG_DONE: dict = {}
+
 VALID_MODES = ("history", "monitor", "history_monitor")
 
 # Global hook for Web UI to receive progress updates
@@ -413,6 +417,7 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
                 DOWNLOADED_IDS[chat_id].append(message.id)
 
             PROCESSED_IDS[chat_id].append(message.id)
+            BACKLOG_DONE[chat_id] = BACKLOG_DONE.get(chat_id, 0) + 1
             break
         except FileReferenceExpiredError:
             logger.warning(
@@ -575,6 +580,9 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
     if chat_id not in PROCESSED_IDS:
         PROCESSED_IDS[chat_id] = []
 
+    BACKLOG_ITERATED.setdefault(chat_id, 0)
+    BACKLOG_DONE.setdefault(chat_id, 0)
+
     CURRENT_BATCH_IDS[chat_id] = []
 
     # Merge chat-specific config with global fallback
@@ -664,6 +672,7 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
             messages_list.append(message)
 
     async for message in messages_iter:  # type: ignore
+        BACKLOG_ITERATED[chat_id] = BACKLOG_ITERATED.get(chat_id, 0) + 1
         if end_date and message.date > end_date:
             continue
         if start_date and message.date < start_date:
@@ -738,6 +747,8 @@ async def register_monitor_handler(
     settings = _resolve_monitor_settings(global_config, chat_conf)
     semaphore = asyncio.Semaphore(max(1, settings["max_concurrent_downloads"]))
     PENDING_IDS.setdefault(chat_id, 0)
+    BACKLOG_ITERATED.setdefault(chat_id, 0)
+    BACKLOG_DONE.setdefault(chat_id, 0)
     FAILED_IDS.setdefault(chat_id, [])
     DOWNLOADED_IDS.setdefault(chat_id, [])
 
@@ -749,6 +760,7 @@ async def register_monitor_handler(
             return
 
         PENDING_IDS[chat_id] = PENDING_IDS.get(chat_id, 0) + 1
+        BACKLOG_ITERATED[chat_id] = BACKLOG_ITERATED.get(chat_id, 0) + 1
         try:
             async with semaphore:
                 await download_media(
@@ -761,6 +773,7 @@ async def register_monitor_handler(
                 )
         finally:
             PENDING_IDS[chat_id] = max(0, PENDING_IDS.get(chat_id, 1) - 1)
+            BACKLOG_DONE[chat_id] = BACKLOG_DONE.get(chat_id, 0) + 1
 
         chat_conf["last_read_message_id"] = message.id
 

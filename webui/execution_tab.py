@@ -391,6 +391,8 @@ def build_execution_tab(
             download_order.clear()
             speed_byte_window.clear()
             last_known_bytes.clear()
+            media_downloader.BACKLOG_ITERATED.clear()
+            media_downloader.BACKLOG_DONE.clear()
             _show_empty_state()
             update_status("Running", "status-running")
             ui.notify("Initializing Telegram Client...", type="info")
@@ -461,6 +463,8 @@ def build_execution_tab(
             download_order.clear()
             speed_byte_window.clear()
             last_known_bytes.clear()
+            media_downloader.BACKLOG_ITERATED.clear()
+            media_downloader.BACKLOG_DONE.clear()
             _show_empty_state()
             update_status("Monitoring", "status-monitoring")
             ui.notify("Starting monitor mode...", type="info")
@@ -517,9 +521,19 @@ def build_execution_tab(
 
     def update_pending():
         if pending_label is not None:
-            total = sum(media_downloader.PENDING_IDS.values())
-            if total > 0:
-                pending_label.set_text(f"\U0001f4e5 {total} pending")
+            total_pending = sum(media_downloader.PENDING_IDS.values())
+            total_iter = sum(media_downloader.BACKLOG_ITERATED.values())
+            total_done = sum(media_downloader.BACKLOG_DONE.values())
+            remaining = max(0, total_iter - total_done)
+
+            parts = []
+            if total_pending > 0:
+                parts.append(f"\U0001f4e5 {total_pending} active")
+            if remaining > 0:
+                parts.append(f"{remaining} remaining")
+
+            if parts:
+                pending_label.set_text(" · ".join(parts))
                 pending_label.style("color: var(--accent);")
             else:
                 pending_label.set_text("\U0001f4e5 0 pending")
