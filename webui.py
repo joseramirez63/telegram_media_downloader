@@ -48,7 +48,7 @@ if hasattr(sys, "unraisablehook"):
 
 
 @ui.page("/")
-def index():
+def index():  # NOSONAR
     ui.page_title("Telegram Media Downloader")
     config = load_config()
     ui.add_head_html(PREMIUM_CSS)

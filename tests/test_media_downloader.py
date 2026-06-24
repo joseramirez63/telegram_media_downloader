@@ -1072,27 +1072,27 @@ class MediaDownloaderTestCase(unittest.TestCase):
             "document": ["all"],
         }
         result = _can_download("audio", file_formats, "mp3")
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
         result1 = _can_download("audio", file_formats, "ogg")
-        self.assertEqual(result1, False)
+        self.assertFalse(result1)
 
         result2 = _can_download("document", file_formats, "pdf")
-        self.assertEqual(result2, True)
+        self.assertTrue(result2)
 
         result3 = _can_download("document", file_formats, "epub")
-        self.assertEqual(result3, True)
+        self.assertTrue(result3)
 
     def test_is_exist(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
         result = _is_exist(os.path.join(this_dir, "__init__.py"))
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
         result1 = _is_exist(os.path.join(this_dir, "init.py"))
-        self.assertEqual(result1, False)
+        self.assertFalse(result1)
 
         result2 = _is_exist(this_dir)
-        self.assertEqual(result2, False)
+        self.assertFalse(result2)
 
     @mock.patch("media_downloader.TelegramClient", return_value=MockClient())
     @mock.patch("media_downloader.process_chat")
@@ -1522,7 +1522,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         call_args = mock_tqdm.call_args
         self.assertEqual(call_args[1]["total"], 1024)
         self.assertEqual(call_args[1]["unit"], "B")
-        self.assertEqual(call_args[1]["unit_scale"], True)
+        self.assertTrue(call_args[1]["unit_scale"])
         self.assertIn("test_video.mp4", call_args[1]["desc"])
 
     @mock.patch("media_downloader.tqdm")

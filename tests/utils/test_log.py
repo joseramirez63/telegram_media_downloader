@@ -21,10 +21,10 @@ class MockLog:
 class MetaTestCase(unittest.TestCase):
     def test_log_filter(self):
         result = LogFilter().filter(MockLog(funcName="invoke"))
-        self.assertEqual(result, False)
+        self.assertFalse(result)
 
         result1 = LogFilter().filter(MockLog(funcName="get_file"))
-        self.assertEqual(result1, True)
+        self.assertTrue(result1)
 
         result2 = LogFilter().filter(MockLog(funcName="Synced"))
-        self.assertEqual(result2, True)
+        self.assertTrue(result2)

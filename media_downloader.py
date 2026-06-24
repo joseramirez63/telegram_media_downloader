@@ -108,7 +108,7 @@ def _can_download(_type: str, file_formats: dict, file_format: Optional[str]) ->
     """
     if _type in ["audio", "document", "video"]:
         allowed_formats: list = file_formats[_type]
-        if not file_format in allowed_formats and allowed_formats[0] != "all":
+        if file_format not in allowed_formats and allowed_formats[0] != "all":
             return False
     return True
 
@@ -205,7 +205,7 @@ def _progress_callback(current: int, total: int, pbar: tqdm) -> None:
         UI_PROGRESS_HOOK(pbar.desc, current, total)
 
 
-async def _get_media_meta(
+async def _get_media_meta(  # NOSONAR
     media_obj: Union[Document, Photo],
     _type: str,
     chat_id: Union[int, str],
@@ -250,9 +250,8 @@ async def _get_media_meta(
                 if hasattr(attr, "file_name"):
                     file_name_base = attr.file_name
                     break
-        if file_name_base == "":
-            if hasattr(media_obj, "id"):
-                file_name_base = f"{_type}_{media_obj.id}"
+        if file_name_base == "" and hasattr(media_obj, "id"):
+            file_name_base = f"{_type}_{media_obj.id}"
 
     # Sanitize the file name to remove invalid Windows characters
     file_name_base = re.sub(r'[<>:"/\\|?*]', "_", file_name_base)
@@ -291,7 +290,7 @@ def get_media_type(message: Message) -> Optional[str]:
 
 
 # pylint: disable=too-many-nested-blocks
-async def download_media(  # pylint: disable=too-many-locals,too-many-branches,too-many-positional-arguments,too-many-statements
+async def download_media(  # pylint: disable=too-many-locals,too-many-branches,too-many-positional-arguments,too-many-statements  # NOSONAR
     client: TelegramClient,
     message: Message,
     media_types: List[str],
@@ -551,9 +550,7 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
             delay = _resolve_download_delay(download_delay)
             if delay is not None:
                 if delay > 0:
-                    logger.info(
-                        "Waiting %.1fs before next download...", delay
-                    )
+                    logger.info("Waiting %.1fs before next download...", delay)
                 await asyncio.sleep(delay)
             PENDING_IDS[chat_id] = PENDING_IDS.get(chat_id, 0) + 1
             msg_id = int(
@@ -578,7 +575,7 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
     return last_message_id
 
 
-async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements  # NOSONAR
     client: TelegramClient,
     global_config: dict,
     chat_conf: dict,

@@ -177,7 +177,7 @@ TOUR_STEPS = [
 ]
 
 
-def build_tour(current_page: dict, tab_panels, nav_items: list):
+def build_tour(current_page: dict, tab_panels, nav_items: list):  # NOSONAR
     """Build the floating tour panel and return (show_tour, check_first_visit) functions.
 
     Parameters

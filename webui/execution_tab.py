@@ -11,7 +11,7 @@ import db
 import media_downloader
 
 
-def build_execution_tab(
+def build_execution_tab(  # NOSONAR
     config, load_config_fn, chat_inputs, open_media_fn, this_dir, log_area
 ):
     """Build the Execution tab panel contents.

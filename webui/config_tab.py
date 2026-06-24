@@ -3,7 +3,7 @@
 from nicegui import ui
 
 
-def build_config_tab(config: dict, save_config_fn):
+def build_config_tab(config: dict, save_config_fn):  # NOSONAR
     """Build the Configuration tab panel contents.
 
     Parameters

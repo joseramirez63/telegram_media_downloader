@@ -8,7 +8,7 @@ from nicegui import ui
 import db
 
 
-def build_history_tab(config: dict, open_media_fn, this_dir: str):
+def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
     """Build the History tab panel contents.
 
     Parameters

@@ -24,7 +24,7 @@ def _step_color(active: bool, past: bool) -> str:
     return "var(--text-tertiary)"
 
 
-def build_setup_wizard(
+def build_setup_wizard(  # NOSONAR
     config: dict, save_config_fn, on_complete_fn, start_step: int = 1
 ):
     """Build and show a modal setup wizard dialog.

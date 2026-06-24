@@ -48,7 +48,7 @@ def init_db():
             )
             conn.commit()
         _db_initialized = True
-    except Exception as e:
+    except Exception:
         logger = logging.getLogger("media_downloader")
         logger.exception("Failed to initialize database")
 
@@ -80,7 +80,7 @@ def record_download(
                 (str(chat_id), message_id, file_name, file_size, file_path, media_type),
             )
             conn.commit()
-    except Exception as e:
+    except Exception:
         logger = logging.getLogger("media_downloader")
         logger.exception("Failed to record download history for %s", file_name)
 
@@ -126,7 +126,7 @@ def get_total_downloaded_bytes() -> int:
             cursor.execute("SELECT COALESCE(SUM(file_size), 0) FROM download_history")
             row = cursor.fetchone()
             return int(row[0]) if row else 0
-    except Exception as e:
+    except Exception:
         logger = logging.getLogger("media_downloader")
         logger.exception("Failed to compute total downloaded size")
         return 0
@@ -140,7 +140,7 @@ def reset_history():
             cursor = conn.cursor()
             cursor.execute("DELETE FROM download_history")
             conn.commit()
-    except Exception as e:
+    except Exception:
         logger = logging.getLogger("media_downloader")
         logger.exception("Failed to reset download history")
 
@@ -208,7 +208,7 @@ def get_recent_downloads(
             total_count = cursor.fetchone()[0]
 
             return records, total_count
-    except Exception as e:
+    except Exception:
         logger = logging.getLogger("media_downloader")
         logger.exception("Failed to fetch download history")
         return [], 0
