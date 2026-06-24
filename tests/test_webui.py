@@ -79,7 +79,7 @@ class TestTour(unittest.TestCase):
     def test_tour_steps_page_values_are_valid(self):
         from webui.tour import TOUR_STEPS
 
-        valid_pages = {"config", "execution", "history"}
+        valid_pages = {"config", "execution", "history", "terminal"}
         for step in TOUR_STEPS:
             if "page" in step:
                 self.assertIn(
