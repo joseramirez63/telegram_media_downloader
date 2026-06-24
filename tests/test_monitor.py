@@ -52,52 +52,46 @@ class TestResolveMonitorSettings(unittest.TestCase):
     """Tests for _resolve_monitor_settings."""
 
     def test_fallback_chat_to_global(self):
-        abs_dir = os.path.abspath(
-            os.path.join(os.path.sep, "global", "dl")
-            if os.path.sep == "/"
-            else os.path.join("C:", os.path.sep, "global", "dl")
-        )
-        global_config = {
-            "media_types": ["photo"],
-            "file_formats": {"photo": ["jpg"]},
-            "max_concurrent_downloads": 8,
-            "download_directory": abs_dir,
-        }
-        chat_conf = {}
-        result = _resolve_monitor_settings(global_config, chat_conf)
-        self.assertEqual(result["media_types"], ["photo"])
-        self.assertEqual(result["file_formats"], {"photo": ["jpg"]})
-        self.assertEqual(result["max_concurrent_downloads"], 8)
-        self.assertEqual(result["download_directory"], abs_dir)
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            abs_dir = os.path.join(tmp, "global", "dl")
+            global_config = {
+                "media_types": ["photo"],
+                "file_formats": {"photo": ["jpg"]},
+                "max_concurrent_downloads": 8,
+                "download_directory": abs_dir,
+            }
+            chat_conf = {}
+            result = _resolve_monitor_settings(global_config, chat_conf)
+            self.assertEqual(result["media_types"], ["photo"])
+            self.assertEqual(result["file_formats"], {"photo": ["jpg"]})
+            self.assertEqual(result["max_concurrent_downloads"], 8)
+            self.assertEqual(result["download_directory"], abs_dir)
 
     def test_chat_overrides_global(self):
-        abs_global = os.path.abspath(
-            os.path.join(os.path.sep, "global", "dl")
-            if os.path.sep == "/"
-            else os.path.join("C:", os.path.sep, "global", "dl")
-        )
-        abs_chat = os.path.abspath(
-            os.path.join(os.path.sep, "chat", "dl")
-            if os.path.sep == "/"
-            else os.path.join("C:", os.path.sep, "chat", "dl")
-        )
-        global_config = {
-            "media_types": ["photo"],
-            "file_formats": {"photo": ["jpg"]},
-            "max_concurrent_downloads": 8,
-            "download_directory": abs_global,
-        }
-        chat_conf = {
-            "media_types": ["video"],
-            "file_formats": {"video": ["mp4"]},
-            "max_concurrent_downloads": 2,
-            "download_directory": abs_chat,
-        }
-        result = _resolve_monitor_settings(global_config, chat_conf)
-        self.assertEqual(result["media_types"], ["video"])
-        self.assertEqual(result["file_formats"], {"video": ["mp4"]})
-        self.assertEqual(result["max_concurrent_downloads"], 2)
-        self.assertEqual(result["download_directory"], abs_chat)
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            abs_global = os.path.join(tmp, "global", "dl")
+            abs_chat = os.path.join(tmp, "chat", "dl")
+            global_config = {
+                "media_types": ["photo"],
+                "file_formats": {"photo": ["jpg"]},
+                "max_concurrent_downloads": 8,
+                "download_directory": abs_global,
+            }
+            chat_conf = {
+                "media_types": ["video"],
+                "file_formats": {"video": ["mp4"]},
+                "max_concurrent_downloads": 2,
+                "download_directory": abs_chat,
+            }
+            result = _resolve_monitor_settings(global_config, chat_conf)
+            self.assertEqual(result["media_types"], ["video"])
+            self.assertEqual(result["file_formats"], {"video": ["mp4"]})
+            self.assertEqual(result["max_concurrent_downloads"], 2)
+            self.assertEqual(result["download_directory"], abs_chat)
 
     def test_empty_configs(self):
         result = _resolve_monitor_settings({}, {})

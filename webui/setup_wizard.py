@@ -342,7 +342,12 @@ def build_setup_wizard(
             config["max_concurrent_downloads"] = 4
         if "media_types" not in config:
             config["media_types"] = [
-                "audio", "document", "photo", "video", "voice", "video_note"
+                "audio",
+                "document",
+                "photo",
+                "video",
+                "voice",
+                "video_note",
             ]
         if "file_formats" not in config:
             config["file_formats"] = {
