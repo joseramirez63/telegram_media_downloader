@@ -77,9 +77,9 @@ def build_execution_tab(
     # Section Header + Status
     with ui.column().style("gap: 2px; margin-bottom: 28px; align-items: center;"):
         ui.label("Execution").classes("section-title")
-        ui.label(
-            "Download or monitor media from your configured chats."
-        ).classes("section-subtitle")
+        ui.label("Download or monitor media from your configured chats.").classes(
+            "section-subtitle"
+        )
         status_label = ui.html(
             '<span class="status-badge status-idle">'
             '<span style="width:6px;height:6px;border-radius:50%;'
@@ -157,9 +157,7 @@ def build_execution_tab(
 
     def _update_empty_state():
         if "el" in empty_state_ref:
-            has_visible = any(
-                entry[7] for entry in active_downloads.values()
-            )
+            has_visible = any(entry[7] for entry in active_downloads.values())
             if has_visible:
                 empty_state_ref["el"].style("display: none;")
             else:
@@ -234,14 +232,6 @@ def build_execution_tab(
 
     ui_logger = UILogHandler()
     ui_logger.setFormatter(logging.Formatter("%(message)s"))
-
-    def _update_empty_state():
-        if "el" in empty_state_ref:
-            empty_state_ref["el"].style("display: none;")
-
-    def _update_empty_state():
-        if "el" in empty_state_ref:
-            empty_state_ref["el"].style("")
 
     def ui_progress_hook(desc, current, total, file_path=None, media_type=None):
         nonlocal speed_byte_window, last_known_bytes

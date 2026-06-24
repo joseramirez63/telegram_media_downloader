@@ -35,10 +35,15 @@ logging.getLogger("telethon").setLevel(logging.WARNING)
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 import sys
 import warnings
+
 warnings.filterwarnings("ignore", message=".*coroutine ignored GeneratorExit.*")
 if hasattr(sys, "unraisablehook"):
     _original_hook = sys.unraisablehook
-    sys.unraisablehook = lambda args: None if "GeneratorExit" in str(getattr(args, "exc_value", "")) else _original_hook(args)
+    sys.unraisablehook = lambda args: (
+        None
+        if "GeneratorExit" in str(getattr(args, "exc_value", ""))
+        else _original_hook(args)
+    )
 
 
 @ui.page("/")
@@ -234,7 +239,9 @@ def index():
                     build_history_tab(config, open_media, THIS_DIR)
 
                 with ui.tab_panel("terminal").style("padding: 0;"):
-                    with ui.column().style(                        "gap: 2px; margin-bottom: 28px; align-items: center;"):
+                    with ui.column().style(
+                        "gap: 2px; margin-bottom: 28px; align-items: center;"
+                    ):
                         ui.label("Terminal Output").classes("section-title")
                         ui.label(
                             "Real-time logs from downloads and monitor mode."
