@@ -99,6 +99,8 @@ def index():
                 nav_items.append((n2, "execution"))
                 n3 = make_nav("History", "schedule", "history")
                 nav_items.append((n3, "history"))
+                n4 = make_nav("Terminal", "terminal", "terminal")
+                nav_items.append((n4, "terminal"))
 
             with ui.column().style("gap: 8px; padding: 0 4px;"):
                 ui.html('<hr class="divider" style="margin: 0;">')
@@ -121,7 +123,7 @@ def index():
 
         # ━━━━━ MAIN CONTENT (tabs) ━━━━━
         with ui.column().style(
-            "flex: 1; height: 100vh; padding: 32px 32px 32px 40px;"
+            "flex: 1; height: 100vh; padding: 32px 40px;"
             " overflow-y: auto; background: var(--surface-dim);"
         ):
             # Media Viewing Modal
@@ -192,34 +194,23 @@ def index():
                 with ui.tab_panel("history").style("padding: 0;"):
                     build_history_tab(config, open_media, THIS_DIR)
 
-        # ━━━━━ RIGHT COLUMN: TERMINAL (fixed, visible from all tabs) ━━━━━
-        with ui.column().style(
-            "width: 380px; min-width: 320px; height: 100vh;"
-            " padding: 32px 24px 32px 0;"
-            " background: var(--surface-dim);"
-        ):
-            with ui.element("div").classes("premium-card").style(
-                "padding: 0; overflow: hidden; height: 100%; display: flex;"
-                " flex-direction: column;"
-            ):
-                with ui.row().classes("items-center").style(
-                    "gap: 10px; padding: 16px 16px 0 16px;"
-                ):
-                    ui.icon("terminal", size="sm", color="primary")
-                    ui.label("Terminal Output").style(
-                        "font-size: 15px; font-weight: 600;"
-                        " color: var(--text-primary);"
+                with ui.tab_panel("terminal").style("padding: 0;"):
+                    with ui.column().style("gap: 2px; margin-bottom: 28px;"):
+                        ui.label("Terminal Output").classes("section-title")
+                        ui.label(
+                            "Real-time logs from downloads and monitor mode."
+                        ).classes("section-subtitle")
+                    log_area = (
+                        ui.log(max_lines=500)
+                        .classes("terminal-log")
+                        .style(
+                            "width: 100%; height: calc(100vh - 200px);"
+                            " min-height: 480px; padding: 16px;"
+                            " font-size: 13px; line-height: 1.7;"
+                            " overflow-y: auto;"
+                        )
                     )
-                log_area = (
-                    ui.log(max_lines=500)
-                    .classes("terminal-log")
-                    .style(
-                        "flex: 1; width: 100%; min-height: 0;"
-                        " padding: 16px; font-size: 13px;"
-                        " line-height: 1.7; overflow-y: auto;"
-                    )
-                )
-                log_area_holder["widget"] = log_area
+                    log_area_holder["widget"] = log_area
 
     # Build tour
     show_tour, check_first_visit = build_tour(current_page, tab_panels, nav_items)
