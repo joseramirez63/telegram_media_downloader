@@ -16,7 +16,7 @@ class FakeHTTPSConnection:
         self.status = status
 
     def request(self, *args, **kwargs):
-        pass
+        """Mock HTTP request; no-op for tests."""
 
     def getresponse(self):
         return FakeHTTPSResponse(self.status)

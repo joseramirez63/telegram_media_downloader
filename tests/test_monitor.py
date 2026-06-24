@@ -19,10 +19,10 @@ class MockClient:
         self._handlers = []
 
     async def start(self):
-        pass
+        """Mock client.start(); no-op for tests."""
 
     async def disconnect(self):
-        pass
+        """Mock client.disconnect(); no-op for tests."""
 
     def on(self, event):
         def wrapper(handler):
@@ -32,7 +32,7 @@ class MockClient:
         return wrapper
 
     def run_until_disconnected(self):
-        pass
+        """Mock blocking wait; no-op for tests."""
 
 
 class MockEvent:
