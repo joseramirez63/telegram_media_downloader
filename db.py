@@ -50,7 +50,7 @@ def init_db():
         _db_initialized = True
     except Exception as e:
         logger = logging.getLogger("media_downloader")
-        logger.error(f"Failed to initialize database: {e}")
+        logger.exception("Failed to initialize database")
 
 
 def _ensure_db():
@@ -82,7 +82,7 @@ def record_download(
             conn.commit()
     except Exception as e:
         logger = logging.getLogger("media_downloader")
-        logger.error(f"Failed to record download history for {file_name}: {e}")
+        logger.exception("Failed to record download history for %s", file_name)
 
 
 def format_bytes(n: int) -> str:
@@ -128,7 +128,7 @@ def get_total_downloaded_bytes() -> int:
             return int(row[0]) if row else 0
     except Exception as e:
         logger = logging.getLogger("media_downloader")
-        logger.error("Failed to compute total downloaded size: %s", e)
+        logger.exception("Failed to compute total downloaded size")
         return 0
 
 
@@ -142,7 +142,7 @@ def reset_history():
             conn.commit()
     except Exception as e:
         logger = logging.getLogger("media_downloader")
-        logger.error(f"Failed to reset download history: {e}")
+        logger.exception("Failed to reset download history")
 
 
 def get_recent_downloads(
@@ -210,5 +210,5 @@ def get_recent_downloads(
             return records, total_count
     except Exception as e:
         logger = logging.getLogger("media_downloader")
-        logger.error(f"Failed to fetch download history: {e}")
+        logger.exception("Failed to fetch download history")
         return [], 0
