@@ -104,7 +104,7 @@ def build_execution_tab(
             total_gb_label.set_text(f"Total: {db.format_bytes(total_bytes)}")
 
     # Metrics row (speed + pending + total GB)
-    with ui.row().style("gap: 16px; margin-bottom: 20px; align-items: center;"):
+    with ui.row().style("gap: 16px; margin-bottom: 4px; align-items: center;"):
         speed_label = ui.label("\u2b07 \u2014").style(
             "font-size: 14px; font-weight: 600;"
             " color: var(--accent); font-variant-numeric: tabular-nums;"
@@ -115,6 +115,12 @@ def build_execution_tab(
         total_gb_label = ui.label("").style(
             "font-size: 13px; font-weight: 500; color: var(--text-tertiary);"
         )
+    ui.label(
+        "\u2b07 speed  \u00b7  \U0001f4e5 backlog  \u00b7  \U0001f4e6 total"
+    ).style(
+        "font-size: 11px; font-weight: 400; color: var(--text-tertiary);"
+        " margin-bottom: 18px; letter-spacing: 0.02em;"
+    )
 
     # Active Downloads card
     with ui.element("div").classes("premium-card").style(
@@ -134,6 +140,13 @@ def build_execution_tab(
             " color: var(--text-tertiary); font-size: 13px;"
             " width: 100%;"
         )
+
+    def _update_empty_state():
+        if "el" in empty_state_ref:
+            if active_downloads:
+                empty_state_ref["el"].style("display: none;")
+            else:
+                empty_state_ref["el"].style("")
 
     # Buttons
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
@@ -196,11 +209,11 @@ def build_execution_tab(
     ui_logger = UILogHandler()
     ui_logger.setFormatter(logging.Formatter("%(message)s"))
 
-    def _hide_empty_state():
+    def _update_empty_state():
         if "el" in empty_state_ref:
             empty_state_ref["el"].style("display: none;")
 
-    def _show_empty_state():
+    def _update_empty_state():
         if "el" in empty_state_ref:
             empty_state_ref["el"].style("")
 
@@ -220,7 +233,7 @@ def build_execution_tab(
             del last_known_bytes[desc]
 
         if desc not in active_downloads:
-            _hide_empty_state()
+            _update_empty_state()
             with progress_container:
                 row = (
                     ui.row()
@@ -393,7 +406,7 @@ def build_execution_tab(
             last_known_bytes.clear()
             media_downloader.BACKLOG_ITERATED.clear()
             media_downloader.BACKLOG_DONE.clear()
-            _show_empty_state()
+            _update_empty_state()
             update_status("Running", "status-running")
             ui.notify("Initializing Telegram Client...", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
@@ -438,7 +451,7 @@ def build_execution_tab(
             main_logger.removeHandler(ui_logger)
             stop_dl_btn.style("display: none;")
             download_client_ref["client"] = None
-            _show_empty_state()
+            _update_empty_state()
             # Save progress even on error/stop
             fresh = load_config_fn()
             media_downloader.update_config(fresh)
@@ -465,7 +478,7 @@ def build_execution_tab(
             last_known_bytes.clear()
             media_downloader.BACKLOG_ITERATED.clear()
             media_downloader.BACKLOG_DONE.clear()
-            _show_empty_state()
+            _update_empty_state()
             update_status("Monitoring", "status-monitoring")
             ui.notify("Starting monitor mode...", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
