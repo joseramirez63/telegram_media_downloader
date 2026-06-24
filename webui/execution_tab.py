@@ -470,6 +470,8 @@ def build_execution_tab(
                     ui.notify("Switching to monitor mode...", type="info")
                     switched_to_monitor = True
                     is_running["value"] = False
+                    stop_dl_btn.style("display: none;")
+                    download_client_ref["client"] = None
                     await run_monitor()
                     return
         except Exception as e:
