@@ -309,9 +309,17 @@ def build_setup_wizard(
         chat_val = str(chat_val).strip()
         if not skip and chat_val:
             try:
-                config["chat_id"] = int(chat_val)
+                chat_id_val = int(chat_val)
             except ValueError:
-                config["chat_id"] = chat_val
+                chat_id_val = chat_val
+            config["chat_id"] = chat_id_val
+            config["chats"] = [
+                {
+                    "chat_id": chat_id_val,
+                    "last_read_message_id": 0,
+                    "ids_to_retry": [],
+                }
+            ]
         if "phone" not in config and wizard_state.get("phone"):
             config["phone"] = wizard_state["phone"]
         save_config_fn(config)
