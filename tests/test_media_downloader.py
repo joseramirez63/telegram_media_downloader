@@ -716,7 +716,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
 
         # Create a custom mock client that always raises FileReferenceExpiredError for ID 14
         class PersistentErrorClient(MockClient):
-    async def download_media(self, message_or_media, file=None, **kwargs):  # NOSONAR
+            async def download_media(self, message_or_media, file=None, **kwargs):  # NOSONAR
                 mock_message = message_or_media
                 if mock_message.id == 14:
                     # Create a proper FileReferenceExpiredError with required parameters
