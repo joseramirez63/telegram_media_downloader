@@ -984,7 +984,7 @@ async def verify_auth_code(client, phone: str, code: str, phone_code_hash: str) 
 
 
 async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    config: dict, pagination_limit: int, client_ref: dict = None
+    config: dict, pagination_limit: int, client_ref: Optional[dict] = None
 ) -> dict:
     """
     Create telethon client and initiate download.
