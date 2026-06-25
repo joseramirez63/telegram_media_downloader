@@ -52,7 +52,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 .style("flex: 1; min-width: 200px;")
                 .props("outlined dense clearable")
             )
-            search_input.on("keydown.enter", load_history)
+            search_input.on("keydown.enter", lambda: load_history())
 
             media_type_select = (
                 ui.select(
@@ -63,20 +63,20 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 .style("width: 140px;")
                 .props("outlined dense")
             )
-            media_type_select.on("update:model-value", load_history)
+            media_type_select.on("update:model-value", lambda: load_history())
 
-            ui.button("Search", on_click=load_history, icon="search").props(
+            ui.button("Search", on_click=lambda: load_history(), icon="search").props(
                 'unelevated dense color="primary"'
             ).style(_FONT_13)
             ui.button(
                 "Refresh",
-                on_click=load_history,
+                on_click=lambda: load_history(),
                 icon="refresh",
             ).props("flat dense color=grey-7").style(_FONT_13)
 
             def clear_history():
                 db.reset_history()
-                load_history()
+                lambda: load_history()()
                 ui.notify("History cleared.", type="info")
 
             ui.button(
@@ -167,7 +167,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
             if "sortBy" in props and props["sortBy"]:
                 pagination["sortBy"] = props["sortBy"]
                 pagination["descending"] = props.get("descending", False)
-            load_history()
+            lambda: load_history()()
 
         history_table.on("request", handle_table_request)
 
@@ -233,12 +233,12 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
             def prev_page():
                 if pagination["page"] > 1:
                     pagination["page"] -= 1
-                    load_history()
+                    lambda: load_history()()
 
             def next_page():
                 if (pagination["page"] * pagination["limit"]) < pagination["total"]:
                     pagination["page"] += 1
-                    load_history()
+                    lambda: load_history()()
 
             ui.button(icon="chevron_left", on_click=prev_page).props(
                 "flat dense round color=grey-7"
@@ -250,4 +250,4 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 "flat dense round color=grey-7"
             )
 
-        load_history()
+        lambda: load_history()()
