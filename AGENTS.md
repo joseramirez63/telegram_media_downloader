@@ -368,6 +368,13 @@ ui.label("x").style(
 ```
 **Fix**: combine into a single constant with full value, or use `+`.
 
+### `show_tour` lambda removal breaks late binding
+The `on_click=lambda: show_tour()` was changed to `on_click=show_tour`,
+but `show_tour` is defined later in the file via
+`show_tour, check_first_visit = build_tour(...)`. Lambda is REQUIRED for
+late binding. **Reverted.** Same applies to `load_history` in
+`history_tab.py` and `finish_tour` in `tour.py`.
+
 ### `# NOSONAR` placement conventions
 - **On function definitions**: `def func():  # NOSONAR` (for S3776/S7503)
 - **On statements**: `raise Exception(...)  # NOSONAR` (for S112)
@@ -442,7 +449,7 @@ be refactored (extract helpers) rather than suppressed.
 Previously used for issue tracking. All fixes below reference SonarCloud rule IDs.
 
 ### DeepSource (current)
-Now uses DeepSource for code quality. Same principles apply.
+Now uses DeepSource for code quality. Configuration in `.deepsource.toml`.
 
 ### SonarCloud State (archive)
 
@@ -454,6 +461,43 @@ As of the last SonarCloud analysis (June 2026):
   S3776 (NOSONAR for complex functions), S5799 (implicit concat),
   S3457 (f-string), S1656 (self-assignment), S112 (NOSONAR),
   S4144 (NOSONAR), S7503 (NOSONAR for mock functions)
+
+### DeepSource Suppressed Issues
+
+The `.deepsource.toml` suppresses these rules as false positives:
+
+| Rule | Excluded | Reason |
+|---|---|---|
+| `PYL-R0201` | `tests/**` | Mock methods must match parent class signatures (can't use @staticmethod on overrides) |
+| `PTC-W0065` | `webui/**` | Nested functions used by NiceGUI callbacks/closures — not dead code |
+| `PTC-W0062` | `webui/**` | NiceGUI `with` blocks create DOM hierarchy — merging would flatten layout |
+| `PYL-W0108` | `webui/**` | Lambdas needed for late binding (functions defined after buttons) |
+| `PYL-E1102` | `webui/execution_tab.py`, `tests/**` | Dict late-binding for stop callbacks; test mock captures are callable at runtime |
+
+### Implemented DeepSource Fixes
+
+| Rule | Fixes | What changed |
+|---|---|---|
+| `PTC-W0039` | 7 | `kwargs.get("key", None)` → `kwargs.get("key")` |
+| `PYL-W0404` | 4 | Removed duplicate `import sys` and `import asyncio` inside functions |
+| `PYL-W0613` | 3 | `filename`→`_filename`, `n`→`_n`, `media_type`→`_media_type` |
+| `PTC-W0048` | 1 | Merged nested `if` with `and` |
+| `PYL-R0201` | 2 | `@staticmethod` on `get_event_loop` and `run_until_complete` (safe — not overrides) |
+| `PY-W2000` | 3 | Removed unused `mock`, `Markdown`, `os` imports |
+| `TYP-068` | 1 | `chat_inputs: list = []` type hint |
+| `PYL-W0612` | 1 | `_global_inputs` prefixed (already done) |
+| `PY-W0070/PY-W0072` | — | Skipped (intentional patterns in NiceGUI code) |
+| `PY-R1000` | — | Skipped (already handled with `# NOSONAR`) |
+| `PYL-W0603` | — | Skipped (`global _db_initialized` needed in db.py) |
+| `PY-A6006` | — | Skipped (`logging.getLogger()` is project pattern) |
+| `PTC-W6004` | — | Skipped (Telegram paths, false positive) |
+| `TYP-068` | — | Skipped (remaining are cosmetic, no functional impact) |
+
+### GitHub Actions Disabled
+Workflows were renamed to `.yml.disabled` and no longer trigger on push/PR:
+- `unittest.yml.disabled`
+- `code-checks.yml.disabled`
+To re-enable, rename back to `.yml`.
 
 ### Using `replaceAll` safely for CSS constants
 
