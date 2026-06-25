@@ -15,7 +15,10 @@ class ConfigManagerTestCase(unittest.TestCase):
 
     def setUp(self):
         """Create a temporary config file for each test."""
-        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        try:
+            self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        except TypeError:
+            self._tmpdir = tempfile.TemporaryDirectory()
         self._tmp = tempfile.NamedTemporaryFile(
             mode="w", suffix=".yaml", delete=False, dir=self._tmpdir.name
         )

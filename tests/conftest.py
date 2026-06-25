@@ -1,13 +1,16 @@
 """Pytest configuration — prevents tests from touching the real database."""
-
 import os
+import sys
 import tempfile
 
 import db
 
 # Redirect the database to a temporary file so tests never touch
 # the real downloads.sqlite3 in the project root.
-_tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+try:
+    _tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+except TypeError:
+    _tmp_dir = tempfile.TemporaryDirectory()
 _tmp_db = tempfile.NamedTemporaryFile(
     suffix=".sqlite3", delete=False, dir=_tmp_dir.name
 )
