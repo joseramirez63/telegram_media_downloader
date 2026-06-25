@@ -21,7 +21,8 @@ def init_db():
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS download_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     chat_id TEXT NOT NULL,
@@ -31,7 +32,8 @@ def init_db():
                     download_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     file_path TEXT
                 )
-            """)
+            """
+            )
             # Migration check: add file_path if it doesn't exist
             cursor.execute("PRAGMA table_info(download_history)")
             columns = [c[1] for c in cursor.fetchall()]
