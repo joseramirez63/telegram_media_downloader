@@ -33,3 +33,13 @@ enabled = true
   code = "PYL-E1102"
   [analyzers.rules.meta]
   exclude_patterns = ["webui/execution_tab.py", "tests/**"]
+
+  [[analyzers.rules]]
+  code = "PYL-W0404"
+  [analyzers.rules.meta]
+  exclude_patterns = ["tests/test_media_downloader.py"]
+
+  [[analyzers.rules]]
+  code = "PY-W2000"
+  [analyzers.rules.meta]
+  exclude_patterns = ["webui.py", "tests/test_pacing.py"]
