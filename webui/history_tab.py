@@ -76,7 +76,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
 
             def clear_history():
                 db.reset_history()
-                lambda: load_history()()
+                load_history()
                 ui.notify("History cleared.", type="info")
 
             ui.button(
@@ -167,7 +167,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
             if "sortBy" in props and props["sortBy"]:
                 pagination["sortBy"] = props["sortBy"]
                 pagination["descending"] = props.get("descending", False)
-            lambda: load_history()()
+            load_history()
 
         history_table.on("request", handle_table_request)
 
@@ -233,12 +233,12 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
             def prev_page():
                 if pagination["page"] > 1:
                     pagination["page"] -= 1
-                    lambda: load_history()()
+                    load_history()
 
             def next_page():
                 if (pagination["page"] * pagination["limit"]) < pagination["total"]:
                     pagination["page"] += 1
-                    lambda: load_history()()
+                    load_history()
 
             ui.button(icon="chevron_left", on_click=prev_page).props(
                 "flat dense round color=grey-7"
@@ -250,4 +250,4 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 "flat dense round color=grey-7"
             )
 
-        lambda: load_history()()
+        load_history()
