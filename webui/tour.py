@@ -213,7 +213,7 @@ def build_tour(current_page: dict, tab_panels, nav_items: list):  # NOSONAR
                 tour_title = ui.label("").style(
                     "font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em;"
                 )
-            ui.button(icon="close", on_click=lambda: finish_tour()).props(
+            ui.button(icon="close", on_click=finish_tour).props(
                 "flat dense round size=sm color=grey-6"
             )
 

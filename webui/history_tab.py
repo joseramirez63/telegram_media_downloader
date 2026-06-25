@@ -52,7 +52,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 .style("flex: 1; min-width: 200px;")
                 .props("outlined dense clearable")
             )
-            search_input.on("keydown.enter", lambda: load_history())
+            search_input.on("keydown.enter", load_history)
 
             media_type_select = (
                 ui.select(
@@ -63,14 +63,14 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
                 .style("width: 140px;")
                 .props("outlined dense")
             )
-            media_type_select.on("update:model-value", lambda: load_history())
+            media_type_select.on("update:model-value", load_history)
 
-            ui.button("Search", on_click=lambda: load_history(), icon="search").props(
+            ui.button("Search", on_click=load_history, icon="search").props(
                 'unelevated dense color="primary"'
             ).style(_FONT_13)
             ui.button(
                 "Refresh",
-                on_click=lambda: load_history(),
+                on_click=load_history,
                 icon="refresh",
             ).props("flat dense color=grey-7").style(_FONT_13)
 

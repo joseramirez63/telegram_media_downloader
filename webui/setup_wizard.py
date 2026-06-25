@@ -89,7 +89,7 @@ def build_setup_wizard(  # NOSONAR
             )
             ui.button(
                 icon="close",
-                on_click=lambda: wizard_dialog.close(),
+                on_click=wizard_dialog.close,
             ).props("flat dense round color=grey-6")
 
         # Progress indicators
@@ -230,7 +230,7 @@ def build_setup_wizard(  # NOSONAR
                 )
 
         with footer_area:
-            ui.button("Back", on_click=lambda: _go_back()).props(_FLAT_GREY).style(
+            ui.button("Back", on_click=_go_back).props(_FLAT_GREY).style(
                 _FONT_13
             )
             with ui.row().style(_GAP_8):
@@ -311,7 +311,7 @@ def build_setup_wizard(  # NOSONAR
             ).style("font-size: 11px; color: var(--text-tertiary);")
 
         with footer_area:
-            ui.button("Back", on_click=lambda: _go_back()).props(_FLAT_GREY).style(
+            ui.button("Back", on_click=_go_back).props(_FLAT_GREY).style(
                 _FONT_13
             )
             with ui.row().style(_GAP_8):
