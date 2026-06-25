@@ -40,6 +40,7 @@ A meta of last read/downloaded message is stored in the config file so that in s
 - **Download Delay default**: Changed from `null` to `[15, 30]` for safer rate-limiting out of the box.
 - **Enhanced Active Downloads**: Max 4 visible rows, active files first, ETA per file (e.g. "73% · 2m left"), completed files with ✓ and preview button.
 - **Performance**: Mutual exclusion between history/monitor modes, cross-mode state cleanup, progress saved on error/Ctrl+C.
+- **Python 3.8+ Compatibility**: Full support for Python 3.8 through 3.13, including test suite compatibility for `TemporaryDirectory.ignore_cleanup_errors` on older Python versions.
 
 ## 🎉 Version 3.4.0 - Interactive Web UI
 

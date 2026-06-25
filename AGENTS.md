@@ -51,6 +51,9 @@ Key functions implementing these modes:
 
 - `begin_import(config, pagination_limit, client_ref=None)` — history backlog.
   Exposes `client_ref` so the Web UI can disconnect it to stop early.
+  **Type annotation**: `client_ref: Optional[dict] = None` (not `dict = None`
+  — mypy rejects that because PEP 484 doesn't allow `None` assigned to
+  non-`Optional` types).
 - `begin_monitor(config)` — creates client, registers `NewMessage` handlers
   per chat via `register_monitor_handler()`. Returns the connected client
   (non-blocking) so callers can decide how to wait.
@@ -393,7 +396,15 @@ be refactored (extract helpers) rather than suppressed.
   prevent test runs from touching the real database and to avoid
   Windows SQLite file-lock issues during cleanup. Same pattern used in
   `test_db.py` (2 classes) and `test_config_manager.py`.
-  `test_monitor.py` classes create fresh `asyncio` event loops in `setUp()`
+  - **Python 3.8/3.9 compat**: `ignore_cleanup_errors` was added in Python
+    3.10. All four sites use a `try/except TypeError` fallback:
+    ```python
+    try:
+        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+    except TypeError:
+        self._tmpdir = tempfile.TemporaryDirectory()
+    ```
+  - `test_monitor.py` classes create fresh `asyncio` event loops in `setUp()`
   to avoid conflicts with `test_media_downloader.py`'s `tearDownClass` loop
   closure on Python 3.13.
 - `test_webui.py` uses `tempfile.gettempdir()` instead of `"/tmp"` to avoid
@@ -415,12 +426,15 @@ be refactored (extract helpers) rather than suppressed.
   `setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b`,
   `codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238`)
   per SonarCloud S7637.
+- Python versions: 3.8 through 3.13 on ubuntu, macos, windows.
 
 ### `code-checks.yml` — Linting
 - **Trigger**: push + pull_request on `master` + `workflow_dispatch` (manual).
 - **Steps**: checkout → setup-python 3.12 → `make dev_install` → `pre-commit
   run --all-files --show-diff-on-failure`.
 - Uses `pip install pre-commit` directly instead of `pre-commit/action`.
+- **Black**: runs with `--check` flag — only verifies formatting, never
+  auto-reformats on commit. Run `python -m black .` manually before commit.
 
 ## SonarCloud State
 
