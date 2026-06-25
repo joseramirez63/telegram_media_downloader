@@ -338,7 +338,7 @@ proxy:
   hostname: 11.22.33.44
   port: 1234
   username: owowo_owowito
-  password: your_cutefa
+  password: ${PROXY_PASSWORD}
 ```
 If your proxy doesn’t require authorization you can omit username and password. Then the proxy will automatically be enabled.
 
