@@ -443,6 +443,12 @@ be refactored (extract helpers) rather than suppressed.
 - **Black**: runs with `--check` flag — only verifies formatting, never
   auto-reformats on commit. Run `python -m black .` manually before commit.
 
+### GitHub Actions Disabled
+Workflows were renamed to `.yml.disabled` and no longer trigger on push/PR:
+- `unittest.yml.disabled`
+- `code-checks.yml.disabled`
+To re-enable, rename back to `.yml`.
+
 ## Code Analysis & Quality
 
 ### SonarCloud (historical)
