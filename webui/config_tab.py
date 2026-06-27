@@ -110,10 +110,11 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
 
         with ui.dialog() as browse_dialog, ui.card().style(
             "width: 600px; max-width: 90vw; border-radius: var(--radius-xl);"
-            " margin: auto;"
+            " margin: auto; text-align: center;"
         ):
             with ui.row().classes("items-center justify-between").style(
                 "padding: 16px 20px; border-bottom: 1px solid var(--border);"
+                " text-align: left;"
             ):
                 ui.label("Select Download Directory").style(
                     "font-size: 16px; font-weight: 700; color: var(--text-primary);"
@@ -122,19 +123,22 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     "flat dense round color=grey-6"
                 )
             # Editable path bar + Go button
-            with ui.row().style("gap: 8px; padding: 8px 20px; align-items: center;"):
-                path_input = (
-                    ui.input(value="")
-                    .classes("col")
-                    .props('outlined dense hint="Path"')
-                    .style("font-size: 13px;")
+            with ui.column().style(
+                "padding: 12px 20px; gap: 8px; align-items: center;"
+            ):
+                with ui.row().style("gap: 8px; align-items: center; width: 100%;"):
+                    path_input = (
+                        ui.input(value="")
+                        .classes("col")
+                        .props('outlined dense hint="Path"')
+                        .style("font-size: 13px;")
+                    )
+                    ui.button("Go", on_click=lambda: _navigate(path_input.value)).props(
+                        "flat dense color=primary"
+                    ).style("font-size: 12px; padding: 2px 12px;")
+                dir_list = ui.column().style(
+                    "max-height: 300px; overflow-y: auto;" " width: 100%; gap: 2px;"
                 )
-                ui.button("Go", on_click=lambda: _navigate(path_input.value)).props(
-                    "flat dense color=primary"
-                ).style("font-size: 12px; padding: 2px 12px;")
-            dir_list = ui.column().style(
-                "max-height: 300px; overflow-y: auto; padding: 0 8px; gap: 2px;"
-            )
             with ui.row().style(
                 "padding: 12px 20px; border-top: 1px solid var(--border);"
                 " justify-content: center; gap: 8px;"
@@ -185,8 +189,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     ui.button(name, on_click=lambda fp=full_path: _navigate(fp)).props(
                         "flat dense color=grey-8"
                     ).style(
-                        "width: 100%; justify-content: flex-start;"
-                        " font-size: 13px; text-align: left;"
+                        "width: 100%; justify-content: center;"
+                        " font-size: 13px; text-align: center;"
                     )
 
             def _navigate(fp):
