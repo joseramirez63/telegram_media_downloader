@@ -315,9 +315,9 @@ def get_media_type(message: Message) -> Optional[str]:  # NOSONAR
     if isinstance(message.media, MessageMediaDocument):
         doc = message.media.document
         for attr in doc.attributes:
-            if hasattr(attr, "voice") and isinstance(attr.voice, bool):
+            if hasattr(attr, "voice") and attr.voice is not None:
                 return "voice" if attr.voice else "audio"
-            if hasattr(attr, "round_message") and isinstance(attr.round_message, bool):
+            if hasattr(attr, "round_message") and attr.round_message is not None:
                 return "video_note" if attr.round_message else "video"
         return "document"
     return None
