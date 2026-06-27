@@ -101,7 +101,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 .classes("col")
                 .props('outlined dense hint="Leave empty to use app directory"')
             )
-            browse_btn = (
+            _browse_btn = (
                 ui.button(icon="folder_open", on_click=lambda: browse_dialog.open())
                 .props("flat dense round color=grey-7")
                 .style("margin-top: 18px;")
@@ -357,7 +357,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         )
 
                     with ui.row().style("gap: 8px; align-items: center;"):
-                        verify_btn = (
+                        _verify_btn = (
                             ui.button(
                                 "Verify Chat",
                                 on_click=lambda c_in=c_inputs: _verify_chat_config(

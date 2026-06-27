@@ -304,7 +304,7 @@ def build_setup_wizard(  # NOSONAR
                     .classes("col")
                     .props(_PROPS_DENSE)
                 )
-                verify_btn = (
+                _verify_btn = (
                     ui.button(
                         "Verify",
                         on_click=lambda: _verify_chat(chat_in.value),
