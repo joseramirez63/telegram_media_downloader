@@ -113,6 +113,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             "width: 550px; max-width: 92vw; border-radius: var(--radius-xl);"
             " overflow: hidden; background: var(--surface);"
             " border: 1px solid var(--border);"
+            " align-items: center !important;"
         ):
             # Header: centered title + absolute X
             with ui.row().classes("justify-center").style(
