@@ -118,7 +118,7 @@ def index():  # NOSONAR
     current_page = {"value": "config"}
     log_area_holder = {}
 
-    with ui.row().classes("w-full h-screen").style("margin:0; padding:0; gap:0;"):
+    with ui.row().classes("w-full min-h-screen").style("margin:0; padding:0; gap:0;"):
 
         # ━━━━━ LEFT SIDEBAR ━━━━━
         with ui.column().classes("sidebar").style(
