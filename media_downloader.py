@@ -978,7 +978,10 @@ async def resolve_chat_entity(
             app_version=APP_VERSION,
             lang_code=LANG_CODE,
         )
-        await client.start()
+        await client.connect()
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            return None
         entity = await client.get_entity(chat_id)
         await client.disconnect()
         name = getattr(entity, "title", None) or getattr(entity, "first_name", None)
@@ -987,6 +990,8 @@ async def resolve_chat_entity(
             if last:
                 name = f"{name} {last}".strip()
         return name
+    except ValueError:
+        return None
     except Exception:
         return None
 
