@@ -35,6 +35,9 @@ _PADDING_0 = "padding: 0;"
 # Suppress Telethon connection cleanup noise on Python 3.13
 logging.getLogger("telethon").setLevel(logging.WARNING)
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+# Suppress auto-reload noise ("X changes detected")
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
+logging.getLogger("nicegui").setLevel(logging.WARNING)
 import warnings
 
 warnings.filterwarnings("ignore", message=".*coroutine ignored GeneratorExit.*")
