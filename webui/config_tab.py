@@ -1,5 +1,6 @@
 """Configuration tab UI for the Telegram Media Downloader Web UI."""
 
+import asyncio
 import os
 import string
 
@@ -357,16 +358,19 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         )
 
                     with ui.row().style("gap: 8px; align-items: center;"):
+                        verify_btn_ref = {}
                         _verify_btn = (
                             ui.button(
                                 "Verify Chat",
-                                on_click=lambda c_in=c_inputs: _verify_chat_config(
-                                    c_in
+                                on_click=lambda c_in=c_inputs, ref=verify_btn_ref: _toggle_verify_config(
+                                    c_in, ref
                                 ),
                             )
                             .props("flat dense color=info size=sm")
                             .style("font-size: 11px;")
                         )
+                        verify_btn_ref["btn"] = _verify_btn
+                        c_inputs["verify_btn_ref"] = verify_btn_ref
                         c_inputs["verify_label"] = ui.label("").style(
                             "font-size: 11px; font-weight: 500;"
                         )
@@ -569,11 +573,35 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             chat_id_val,
         )
         if name:
-            verify_lbl.set_text(f"Found: {name}")
+            c_inputs["_original_id"] = str(chat_val)
+            c_inputs["_verified_name"] = name
+            c_inputs["chat_id"].set_value(name)
+            c_inputs["chat_id"].props(_OUTLINED_DENSE + ' color="positive"')
+            verify_lbl.set_text("Chat detected")
             verify_lbl.style("color: var(--positive);")
+            btn = c_inputs.get("verify_btn_ref", {}).get("btn")
+            if btn:
+                btn.set_text("Change")
+                btn.props("flat dense color=positive size=sm")
         else:
             verify_lbl.set_text("Could not resolve. Check the ID/username.")
             verify_lbl.style("color: var(--negative);")
+
+    def _toggle_verify_config(c_inputs, btn_ref):
+        verified_name = c_inputs.get("_verified_name", "")
+        if verified_name:
+            c_inputs["chat_id"].set_value(c_inputs.get("_original_id", ""))
+            c_inputs["chat_id"].props(_OUTLINED_DENSE)
+            c_inputs["_verified_name"] = ""
+            verify_lbl = c_inputs.get("verify_label")
+            if verify_lbl:
+                verify_lbl.set_text("")
+            btn = btn_ref.get("btn")
+            if btn:
+                btn.set_text("Verify Chat")
+                btn.props("flat dense color=info size=sm")
+        else:
+            task = asyncio.ensure_future(_verify_chat_config(c_inputs))
 
     # ── Save / Reload Actions ──
     def do_save():
@@ -659,7 +687,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
 
         built_chats = []
         for c_in in chat_inputs:
-            chat_val = (c_in["chat_id"].value or "").strip()
+            chat_val = (c_in.get("_original_id") or c_in["chat_id"].value or "").strip()
             if not chat_val:
                 continue
             try:

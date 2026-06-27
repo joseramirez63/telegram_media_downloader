@@ -1,5 +1,7 @@
 """Setup wizard modal for first-run authentication."""
 
+import asyncio
+
 from nicegui import ui
 
 import media_downloader
@@ -298,20 +300,25 @@ def build_setup_wizard(  # NOSONAR
                 chat_in = (
                     ui.input(
                         "Chat ID / @username",
-                        value=wizard_state.get("chat_id", ""),
+                        value=(
+                            wizard_state.get("verified_name")
+                            or wizard_state.get("chat_id", "")
+                        ),
                         placeholder="123456789 or @channelname",
                     )
                     .classes("col")
                     .props(_PROPS_DENSE)
                 )
+                verify_btn_ref = {}
                 _verify_btn = (
                     ui.button(
                         "Verify",
-                        on_click=lambda: _verify_chat(chat_in.value),
+                        on_click=lambda: _toggle_verify(chat_in.value),
                     )
                     .props("outline dense color=info")
                     .style(_FONT_13)
                 )
+                verify_btn_ref["btn"] = _verify_btn
             verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
             ui.label(
                 "Formats: @username for public channels, "
@@ -352,13 +359,38 @@ def build_setup_wizard(  # NOSONAR
                 chat_id_val,
             )
             if name:
-                verify_label.set_text(f"Chat found: {name}")
+                wizard_state["chat_id"] = str(chat_val)
+                wizard_state["verified_name"] = name
+                chat_in.set_value(name)
+                chat_in.props(_PROPS_DENSE + ' color="positive"')
+                verify_label.set_text("Chat detected")
                 verify_label.style(
                     "color: var(--positive); font-size: 12px; font-weight: 500;"
                 )
+                verify_btn_ref["btn"].set_text("Change")
+                verify_btn_ref["btn"].props("outline dense color=positive")
             else:
                 verify_label.set_text("Could not resolve chat. Check the ID/username.")
                 verify_label.style("color: var(--negative);")
+
+        def _toggle_verify(chat_val):
+            wizard_state["verified_name"] = wizard_state.get("verified_name", "")
+            if wizard_state["verified_name"]:
+                chat_in.set_value(wizard_state["chat_id"])
+                chat_in.props(_PROPS_DENSE)
+                wizard_state["verified_name"] = ""
+                verify_label.set_text("")
+                verify_btn_ref["btn"].set_text("Verify")
+                verify_btn_ref["btn"].props("outline dense color=info")
+            else:
+                verify_label.set_text("Verifying...")
+                verify_label.style("color: var(--text-secondary);")
+                result = wizard_state.get("_verify_task")
+                if result and not result.done():
+                    return
+                wizard_state["_verify_task"] = asyncio.ensure_future(
+                    _verify_chat(str(chat_val).strip())
+                )
 
     def _go_back():
         wizard_state["step"] = max(1, wizard_state["step"] - 1)
@@ -367,10 +399,11 @@ def build_setup_wizard(  # NOSONAR
     def _finish(chat_val, skip=False):
         chat_val = str(chat_val).strip()
         if not skip and chat_val:
+            original_id = wizard_state.get("chat_id", chat_val)
             try:
-                chat_id_val = int(chat_val)
+                chat_id_val = int(original_id)
             except ValueError:
-                chat_id_val = chat_val
+                chat_id_val = original_id
             config["chat_id"] = chat_id_val
             config["chats"] = [
                 {
