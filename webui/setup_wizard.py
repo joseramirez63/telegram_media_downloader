@@ -313,7 +313,7 @@ def build_setup_wizard(  # NOSONAR
                 _verify_btn = (
                     ui.button(
                         "Verify",
-                        on_click=lambda: _toggle_verify(chat_in.value),
+                        on_click=lambda: _toggle_verify(),
                     )
                     .props("outline dense color=info")
                     .style(_FONT_13)
@@ -341,51 +341,40 @@ def build_setup_wizard(  # NOSONAR
                     'unelevated color="primary"'
                 ).style(_FONT_13 + " padding: 6px 24px;")
 
-        async def _verify_chat(chat_val):
-            chat_val = str(chat_val).strip()
+        async def _toggle_verify():
+            wizard_state["verified_name"] = wizard_state.get("verified_name", "")
+            if wizard_state["verified_name"]:
+                chat_in.set_value(wizard_state["chat_id"])
+                chat_in.props(_PROPS_DENSE)
+                wizard_state["verified_name"] = ""
+                verify_label.set_text("")
+                verify_btn_ref["btn"].set_text("Verify")
+                verify_btn_ref["btn"].props("outline dense color=info")
+                return
+            verify_label.set_text("Verifying...")
+            verify_label.style("color: var(--text-secondary);")
+            chat_val = str(chat_in.value).strip()
             if not chat_val:
                 verify_label.set_text("Enter a chat ID or @username first.")
                 verify_label.style("color: var(--text-tertiary);")
                 return
-            verify_label.set_text("Verifying...")
-            verify_label.style("color: var(--text-secondary);")
             try:
                 chat_id_val = int(chat_val)
             except ValueError:
                 chat_id_val = chat_val
-            name = None
-            wiz_client = wizard_state.get("client")
-            if wiz_client is not None and await wiz_client.is_connected():
-                try:
-                    entity = await asyncio.wait_for(
-                        wiz_client.get_entity(chat_id_val), timeout=10.0
-                    )
-                    name = (
-                        getattr(entity, "title", None)
-                        or getattr(entity, "first_name", None)
-                    )
-                    if name:
-                        last = getattr(entity, "last_name", "")
-                        if last:
-                            name = f"{name} {last}".strip()
-                except asyncio.TimeoutError:
-                    name = None
-                except Exception:
-                    name = None
-            if not name:
-                try:
-                    name = await asyncio.wait_for(
-                        media_downloader.resolve_chat_entity(
-                            wizard_state["api_id"],
-                            wizard_state["api_hash"],
-                            chat_id_val,
-                        ),
-                        timeout=10.0,
-                    )
-                except asyncio.TimeoutError:
-                    name = None
-                except Exception:
-                    name = None
+            try:
+                name = await asyncio.wait_for(
+                    media_downloader.resolve_chat_entity(
+                        wizard_state["api_id"],
+                        wizard_state["api_hash"],
+                        chat_id_val,
+                    ),
+                    timeout=12.0,
+                )
+            except asyncio.TimeoutError:
+                name = None
+            except Exception:
+                name = None
             if name:
                 wizard_state["chat_id"] = str(chat_val)
                 wizard_state["verified_name"] = name
@@ -400,25 +389,6 @@ def build_setup_wizard(  # NOSONAR
             else:
                 verify_label.set_text("Could not resolve chat. Check the ID/username.")
                 verify_label.style("color: var(--negative);")
-
-        def _toggle_verify(chat_val):
-            wizard_state["verified_name"] = wizard_state.get("verified_name", "")
-            if wizard_state["verified_name"]:
-                chat_in.set_value(wizard_state["chat_id"])
-                chat_in.props(_PROPS_DENSE)
-                wizard_state["verified_name"] = ""
-                verify_label.set_text("")
-                verify_btn_ref["btn"].set_text("Verify")
-                verify_btn_ref["btn"].props("outline dense color=info")
-            else:
-                verify_label.set_text("Verifying...")
-                verify_label.style("color: var(--text-secondary);")
-                result = wizard_state.get("_verify_task")
-                if result and not result.done():
-                    return
-                wizard_state["_verify_task"] = asyncio.ensure_future(
-                    _verify_chat(str(chat_val).strip())
-                )
 
     def _go_back():
         wizard_state["step"] = max(1, wizard_state["step"] - 1)
