@@ -98,6 +98,9 @@ TOUR_STEPS = [
             "This writes your settings to `config.yaml` in the app directory.\n\n"
             "- **Save Configuration** — Writes all current settings to disk\n"
             "- **Reload from Disk** — Discards unsaved changes and reloads from the file\n\n"
+            "> ⚠️ **Important:** If you add or remove chats and go to Execution "
+            "without saving, the downloader will still use your OLD chat list. "
+            "Always save before switching tabs to run a download.\n\n"
             "> 📌 You **must** save before running a download — the downloader reads from the saved config file."
         ),
     },
@@ -129,7 +132,10 @@ TOUR_STEPS = [
             "   - 🟢 **Complete** — Finished\n"
             "   - 🔴 **Error** — Something went wrong\n\n"
             "While running, a **Stop Download** or **Stop Monitoring** button appears. "
-            "Clicking it saves progress and disconnects gracefully."
+            "Clicking it saves progress and disconnects gracefully.\n\n"
+            "> ⚠️ Before clicking **Start**, go back to Configuration and make sure "
+            "you've saved any changes — especially if you added or removed chats. "
+            "The downloader reads the saved config, not the in-progress UI."
         ),
     },
     {
