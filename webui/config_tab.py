@@ -114,24 +114,25 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             " margin: auto;"
             " border: 1px solid var(--border);"
         ):
-            with ui.row().style("padding: 20px 24px 0 24px; align-items: center;"):
-                ui.element("div").style("flex: 1;")
+            # Header
+            with ui.row().classes("items-center justify-between").style(
+                "padding: 20px 24px 0 24px;"
+            ):
                 ui.label("Select Download Directory").style(
                     "font-size: 18px; font-weight: 700;"
                     " color: var(--text-primary);"
                     " letter-spacing: -0.01em;"
                 )
-                with ui.element("div").style("flex: 1; text-align: right;"):
-                    ui.button(icon="close", on_click=browse_dialog.close).props(
-                        "flat dense round color=grey-6"
-                    )
-            # Editable path bar + Go button
-            with ui.column().style(
-                "padding: 16px 24px; gap: 10px; align-items: center;"
+                ui.button(icon="close", on_click=browse_dialog.close).props(
+                    "flat dense round color=grey-6"
+                )
+            # Content: all centered
+            with ui.column().classes("items-center").style(
+                "padding: 16px 24px; gap: 10px;"
             ):
-                with ui.row().style(
-                    "gap: 8px; align-items: center; justify-content: center;"
-                    " width: 100%;"
+                # Path bar
+                with ui.row().classes("items-center justify-center").style(
+                    "gap: 8px; width: 100%;"
                 ):
                     path_input = (
                         ui.input(value="")
@@ -144,15 +145,20 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     ).props("flat dense color=primary").style(
                         "font-size: 13px; padding: 4px 16px;"
                     )
-                dir_list = ui.column().style(
-                    "max-height: 280px; overflow-y: auto;"
-                    " width: 90%; max-width: 450px;"
-                    " margin: 0 auto; gap: 2px;"
+                # Directory list
+                dir_list = (
+                    ui.column()
+                    .classes("items-center")
+                    .style(
+                        "max-height: 280px; overflow-y: auto;"
+                        " width: 90%; max-width: 500px; gap: 2px;"
+                    )
                 )
-            with ui.row().style(
+            # Footer
+            with ui.row().classes("justify-center").style(
                 "padding: 16px 24px;"
                 " border-top: 1px solid var(--border);"
-                " justify-content: center; gap: 8px; width: 100%;"
+                " gap: 8px; width: 100%;"
             ):
                 ui.button("Select", on_click=lambda: _select_folder()).props(
                     'unelevated color="primary"'
