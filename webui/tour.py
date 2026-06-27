@@ -308,8 +308,13 @@ def build_tour(current_page: dict, tab_panels, nav_items: list):  # NOSONAR
         ui.run_javascript("localStorage.setItem('tg_dl_tour_seen', '1')")
 
     async def check_first_visit():
-        result = await ui.run_javascript("localStorage.getItem('tg_dl_tour_seen')")
-        if not result:
-            show_tour()
+        try:
+            result = await ui.run_javascript(
+                "localStorage.getItem('tg_dl_tour_seen')", timeout=3.0
+            )
+            if not result:
+                show_tour()
+        except Exception:
+            pass
 
     return show_tour, check_first_visit
