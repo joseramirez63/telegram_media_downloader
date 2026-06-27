@@ -109,7 +109,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             )
 
         with ui.dialog() as browse_dialog, ui.card().style(
-            "width: 500px; max-width: 90vw; border-radius: var(--radius-xl);"
+            "width: 600px; max-width: 90vw; border-radius: var(--radius-xl);"
         ):
             with ui.row().classes("items-center justify-between").style(
                 "padding: 16px 20px; border-bottom: 1px solid var(--border);"
@@ -120,10 +120,17 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 ui.button(icon="close", on_click=browse_dialog.close).props(
                     "flat dense round color=grey-6"
                 )
-            current_path = ui.label("").style(
-                "font-size: 12px; color: var(--text-secondary);"
-                " padding: 8px 20px; word-break: break-all;"
-            )
+            # Editable path bar + Go button
+            with ui.row().style("gap: 8px; padding: 8px 20px; align-items: center;"):
+                path_input = (
+                    ui.input(value="")
+                    .classes("col")
+                    .props('outlined dense hint="Path"')
+                    .style("font-size: 13px;")
+                )
+                ui.button("Go", on_click=lambda: _navigate(path_input.value)).props(
+                    "flat dense color=primary"
+                ).style("font-size: 12px; padding: 2px 12px;")
             dir_list = ui.column().style(
                 "max-height: 300px; overflow-y: auto; padding: 0 8px; gap: 2px;"
             )
@@ -138,12 +145,14 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     "flat dense color=grey-7"
                 ).style("font-size: 13px;")
 
-            browse_state = {"path": ""}
+            browse_state = {
+                "path": config.get("download_directory", "") or os.path.abspath(".")
+            }
 
             def _populate_dir():
                 dir_list.clear()
                 p = browse_state["path"]
-                current_path.set_text(p or "(root)")
+                path_input.set_value(p or "")
                 if not p:
                     if os.name == "nt":
                         drives = [
@@ -155,6 +164,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                             _add_dir_entry(d, d)
                     else:
                         _add_dir_entry("/", "/")
+                    return
+                if not os.path.isdir(p):
                     return
                 try:
                     entries = sorted(os.listdir(p))
@@ -178,6 +189,13 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     )
 
             def _navigate(fp):
+                fp = str(fp or "").strip()
+                if not fp:
+                    return
+                if not os.path.isabs(fp):
+                    fp = os.path.abspath(fp)
+                if os.path.isfile(fp):
+                    fp = os.path.dirname(fp)
                 browse_state["path"] = fp
                 _populate_dir()
 
