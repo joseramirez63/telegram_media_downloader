@@ -202,8 +202,8 @@ def index():  # NOSONAR
 
         # ━━━━━ MAIN CONTENT (tabs) ━━━━━
         with ui.column().style(
-            "flex: 1; min-height: 100vh; padding: 32px 40px;"
-            " background: var(--surface-dim);"
+            "flex: 1; height: 100vh; padding: 32px 40px;"
+            " overflow-y: auto; background: var(--surface-dim);"
         ):
             # Account badge (top-right)
             account_badge = ui.html(
@@ -300,7 +300,10 @@ def index():  # NOSONAR
                 with ui.tab_panel("history").style(_PADDING_0):
                     build_history_tab(config, open_media, THIS_DIR)
 
-                with ui.tab_panel("terminal").style(_PADDING_0):
+                with ui.tab_panel("terminal").style(
+                    "padding: 0; display: flex; flex-direction: column;"
+                    " height: 100%;"
+                ):
                     with ui.column().style(
                         "gap: 2px; margin-bottom: 28px; align-items: center;"
                     ):
@@ -312,14 +315,16 @@ def index():  # NOSONAR
                         ui.log(max_lines=500)
                         .classes("terminal-log")
                         .style(
-                            "width: 100%; min-height: 600px; padding: 16px;"
+                            "width: 100%; flex: 1; padding: 16px;"
                             " font-size: 13px; line-height: 1.7;"
-                            " overflow: visible !important;"
                         )
                     )
                     log_area_holder["widget"] = log_area
 
-                with ui.tab_panel("debug").style(_PADDING_0):
+                with ui.tab_panel("debug").style(
+                    "padding: 0; display: flex; flex-direction: column;"
+                    " height: 100%;"
+                ):
                     build_debug_tab(config, THIS_DIR, log_area_holder)
 
     # Build tour

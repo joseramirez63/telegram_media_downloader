@@ -33,7 +33,8 @@ def build_debug_tab(config: dict, this_dir: str, log_area_holder: dict):
 
     # ── Live Errors & Warnings ──
     with ui.element("div").classes("premium-card").style(
-        "padding: 24px; margin-bottom: 16px;"
+        "padding: 24px; margin-bottom: 16px; flex: 1;"
+        " display: flex; flex-direction: column;"
     ):
         with ui.row().classes("items-center").style("gap: 10px; margin-bottom: 12px;"):
             ui.icon("warning", size="sm", color="negative")
@@ -44,12 +45,11 @@ def build_debug_tab(config: dict, this_dir: str, log_area_holder: dict):
             ui.log(max_lines=30)
             .classes("terminal-log")
             .style(
-                "width: 100%; min-height: 500px;"
+                "width: 100%; min-height: 300px; flex: 1;"
                 " padding: 12px; font-size: 12px; line-height: 1.6;"
                 " font-family: monospace;"
                 " border: 1px solid var(--border);"
                 " border-radius: 8px;"
-                " overflow: visible !important;"
             )
         )
 

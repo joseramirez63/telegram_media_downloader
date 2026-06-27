@@ -140,7 +140,7 @@ body.body--dark .q-field--outlined .q-field__control:before { border-color: var(
 .dl-row:hover { border-color: var(--border); box-shadow: var(--shadow-sm); }
 
 /* ── Terminal ────────────────────────────────────────────────── */
-.terminal-log { background: #0f172a !important; color: #a3e635 !important; border-radius: var(--radius-md) !important; border: 1px solid #1e293b !important; font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace !important; overflow: visible !important; }
+.terminal-log { background: #0f172a !important; color: #a3e635 !important; border-radius: var(--radius-md) !important; border: 1px solid #1e293b !important; font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace !important; }
 body.body--dark .terminal-log { background: #020617 !important; border-color: #1e293b !important; }
 
 /* ── Scrollbar ───────────────────────────────────────────────── */
