@@ -146,7 +146,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 ).style("font-size: 13px; padding: 4px 16px;")
             # Directory list — each entry in a centered row
             dir_list = ui.column().style(
-                "max-height: 260px; overflow-y: auto;" " padding: 8px 24px; gap: 2px;"
+                "padding: 8px 24px; gap: 2px;"
             )
             # Footer
             with ui.row().classes("justify-center").style(
