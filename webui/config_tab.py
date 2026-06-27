@@ -47,7 +47,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
     with ui.column().style("gap: 2px; margin-bottom: 28px; align-items: center;"):
         ui.label("Configuration").classes("section-title")
         ui.label(
-            "Manage your Telegram API credentials, download preferences, and target chats."
+            "Manage your Telegram API credentials, download preferences, and target "
+            "chats."
         ).classes("section-subtitle")
 
     # ── API Credentials Card ──
@@ -109,12 +110,11 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             )
 
         with ui.dialog() as browse_dialog, ui.card().style(
-            "width: 600px; max-width: 90vw; border-radius: var(--radius-xl);"
+            "width: 550px; max-width: 92vw; border-radius: var(--radius-xl);"
             " overflow: hidden; background: var(--surface);"
-            " margin: auto;"
             " border: 1px solid var(--border);"
         ):
-            # Header
+            # Header: title + X
             with ui.row().classes("items-center justify-between").style(
                 "padding: 20px 24px 0 24px;"
             ):
@@ -126,39 +126,30 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 ui.button(icon="close", on_click=browse_dialog.close).props(
                     "flat dense round color=grey-6"
                 )
-            # Content: all centered
-            with ui.column().classes("items-center").style(
-                "padding: 16px 24px; gap: 10px;"
+            # Path bar — centered row
+            with ui.row().classes("justify-center").style(
+                "padding: 12px 24px 0 24px; gap: 8px;"
             ):
-                # Path bar
-                with ui.row().classes("items-center justify-center").style(
-                    "gap: 8px; width: 100%;"
-                ):
-                    path_input = (
-                        ui.input(value="")
-                        .style("font-size: 13px; max-width: 400px;")
-                        .props('outlined dense hint="Path"')
-                    )
-                    ui.button(
-                        "Go",
-                        on_click=lambda: _navigate(path_input.value),
-                    ).props("flat dense color=primary").style(
-                        "font-size: 13px; padding: 4px 16px;"
-                    )
-                # Directory list
-                dir_list = (
-                    ui.column()
-                    .classes("items-center")
-                    .style(
-                        "max-height: 280px; overflow-y: auto;"
-                        " width: 90%; max-width: 500px; gap: 2px;"
-                    )
+                path_input = (
+                    ui.input(value="")
+                    .style("font-size: 13px; max-width: 380px;")
+                    .props('outlined dense hint="Path"')
                 )
+                ui.button(
+                    "Go",
+                    on_click=lambda: _navigate(path_input.value),
+                ).props(
+                    "flat dense color=primary"
+                ).style("font-size: 13px; padding: 4px 16px;")
+            # Directory list — each entry in a centered row
+            dir_list = ui.column().style(
+                "max-height: 260px; overflow-y: auto;" " padding: 8px 24px; gap: 2px;"
+            )
             # Footer
             with ui.row().classes("justify-center").style(
                 "padding: 16px 24px;"
                 " border-top: 1px solid var(--border);"
-                " gap: 8px; width: 100%;"
+                " gap: 8px;"
             ):
                 ui.button("Select", on_click=lambda: _select_folder()).props(
                     'unelevated color="primary"'
@@ -202,10 +193,14 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         _add_dir_entry(entry, full)
 
             def _add_dir_entry(name, full_path):
+                # Each entry in its own centered row
                 with dir_list:
-                    ui.button(name, on_click=lambda fp=full_path: _navigate(fp)).props(
-                        "flat dense color=grey-8"
-                    ).style("width: 100%;" " font-size: 13px; text-align: center;")
+                    with ui.row().classes("justify-center").style("width: 100%;"):
+                        ui.button(
+                            name, on_click=lambda fp=full_path: _navigate(fp)
+                        ).props("flat dense color=grey-8").style(
+                            "font-size: 13px; min-width: 200px;"
+                        )
 
             def _navigate(fp):
                 fp = str(fp or "").strip()
@@ -237,21 +232,12 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 .classes("col")
                 .props('outlined dense hint="YYYY-MM-DDTHH:MM:SS+00:00"')
             )
+
+        with ui.row().style(_GAP_16_W100_MB_16):
             global_inputs["max_messages"] = (
                 ui.number(
                     "Max Messages",
                     value=config.get("max_messages", None),
-                    format="%.0f",
-                )
-                .classes("col")
-                .props(_OUTLINED_DENSE)
-            )
-
-        with ui.row().style(_GAP_16_W100_MB_16):
-            global_inputs["max_concurrent"] = (
-                ui.number(
-                    "Max Concurrent",
-                    value=config.get("max_concurrent_downloads", 1),
                     format="%.0f",
                 )
                 .classes("col")
@@ -265,88 +251,106 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             global_inputs["download_delay"] = (
                 ui.input("Download Delay (sec)", value=delay_str)
                 .classes("col")
-                .props('outlined dense hint="e.g. 2 or 1,5 for range"')
+                .props('outlined dense hint="e.g. 2 or 1,5"')
             )
 
-        with ui.row().style("gap: 16px; width: 100%; align-items: center;"):
-            _media_types = config.get(
-                "media_types",
-                ["photo", "video", "document", "audio", "voice", "video_note"],
+        with ui.row().style(_GAP_16_W100_MB_16):
+            global_inputs["max_concurrent"] = (
+                ui.number(
+                    "Max Concurrent Downloads",
+                    value=config.get("max_concurrent_downloads", 1),
+                    format="%.0f",
+                )
+                .classes("col")
+                .props(_OUTLINED_DENSE)
             )
+            global_inputs["parallel_chats"] = ui.switch(
+                "Parallel Chats",
+                value=config.get("parallel_chats", False),
+            )
+
+        with ui.row().style(_GAP_16_W100_MB_16):
             global_inputs["media_types"] = (
                 ui.select(
                     options=[
+                        "audio",
+                        "document",
                         "photo",
                         "video",
-                        "document",
-                        "audio",
                         "voice",
                         "video_note",
                     ],
-                    value=_media_types,
+                    value=config.get(
+                        "media_types",
+                        [],
+                    ),
                     multiple=True,
                     label="Media Types",
                 )
                 .classes("col")
                 .props("outlined dense use-chips")
             )
-            global_inputs["parallel_chats"] = ui.checkbox(
-                "Parallel Chats",
-                value=config.get("parallel_chats", False),
-            ).style("color: var(--text-secondary);")
-
-        with ui.expansion("File Formats (Comma-separated)", icon="folder_zip").props(
-            "dense"
-        ).style("width: 100%; font-size: 13px; margin-top: 8px;"):
-            with ui.row().style("gap: 16px; width: 100%; padding-top: 8px;"):
-                file_formats = config.get("file_formats", {})
-                global_inputs["format_audio"] = (
-                    ui.input(
-                        "Audio Formats",
-                        value=",".join(file_formats.get("audio", ["all"])),
-                    )
-                    .classes("col")
-                    .props('outlined dense hint="e.g. mp3,flac or all"')
+            with ui.column().classes("col").style("gap: 4px;"):
+                ui.label("File Formats:").style(
+                    "font-size: 11px; color: var(--text-tertiary);"
+                    " margin-left: 4px; margin-bottom: -6px;"
                 )
-                global_inputs["format_video"] = (
-                    ui.input(
-                        "Video Formats",
-                        value=",".join(file_formats.get("video", ["all"])),
-                    )
-                    .classes("col")
-                    .props('outlined dense hint="e.g. mp4,mkv or all"')
+                file_formats = config.get(
+                    "file_formats",
+                    {
+                        "audio": ["all"],
+                        "document": ["all"],
+                        "video": ["all"],
+                    },
                 )
-                global_inputs["format_photo"] = (
-                    ui.input(
-                        "Photo Formats",
-                        value=",".join(file_formats.get("photo", ["all"])),
+                with ui.row().style("gap: 8px; width: 100%;"):
+                    global_inputs["format_audio"] = (
+                        ui.input(
+                            "Audio Formats",
+                            value=",".join(file_formats.get("audio", [])),
+                        )
+                        .classes("col")
+                        .props(_PROPS_PLACEHOLDER_ALL)
                     )
-                    .classes("col")
-                    .props('outlined dense hint="e.g. jpg,png or all"')
-                )
-                global_inputs["format_document"] = (
-                    ui.input(
-                        "Document Formats",
-                        value=",".join(file_formats.get("document", ["all"])),
+                    global_inputs["format_video"] = (
+                        ui.input(
+                            "Video Formats",
+                            value=",".join(file_formats.get("video", [])),
+                        )
+                        .classes("col")
+                        .props(_PROPS_PLACEHOLDER_ALL)
                     )
-                    .classes("col")
-                    .props('outlined dense hint="e.g. pdf,epub or all"')
-                )
+                with ui.row().style(
+                    "gap: 8px; width: 100%; align-items: start; margin-top: 4px;"
+                ):
+                    global_inputs["format_photo"] = (
+                        ui.input(
+                            "Photo Formats",
+                            value=",".join(file_formats.get("photo", [])),
+                        )
+                        .classes("col")
+                        .props(_PROPS_PLACEHOLDER_ALL)
+                    )
+                    global_inputs["format_document"] = (
+                        ui.input(
+                            "Document Formats",
+                            value=",".join(file_formats.get("document", [])),
+                        )
+                        .classes("col")
+                        .props(_PROPS_PLACEHOLDER_ALL)
+                    )
 
     # ── Target Chats Card ──
     with ui.element("div").classes("premium-card").style(_PADDING_24_MB_20):
-        with ui.row().classes("items-center justify-between").style(
-            "width: 100%; margin-bottom: 20px;"
-        ):
-            with ui.row().classes("items-center").style("gap: 10px;"):
-                ui.icon("forum", size="sm", color="primary")
-                with ui.column().style(_GAP_0):
-                    ui.label("Target Chats").style(_CARD_TITLE_FONT)
-                    ui.label("Add chats to download media from").style(
-                        _CARD_SUBTITLE_FONT
-                    )
+        with ui.row().classes("items-center").style("gap: 10px; margin-bottom: 20px;"):
+            ui.icon("forum", size="sm", color="primary")
+            with ui.column().style(_GAP_0):
+                ui.label("Target Chats").style(_CARD_TITLE_FONT)
+                ui.label(
+                    "Manage the Telegram chats you want to download media from"
+                ).style(_CARD_SUBTITLE_FONT)
 
-        chats_container = ui.column().style("width: 100%; gap: 12px;")
+        chats_container = ui.column().style("gap: 16px; width: 100%;")
 
         def add_chat_ui(chat_data=None):
             if chat_data is None:
@@ -416,14 +420,17 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         "dense"
                     ).style("margin-top: 8px; font-size: 13px;"):
                         with ui.column().style(
-                            "gap: 16px; padding: 12px; background: rgba(0,0,0,0.02); border-radius: 8px; border: 1px solid var(--border-color); margin-top: 8px; width: 100%;"
+                            "gap: 16px; padding: 12px; background: rgba(0,0,0,0.02); "
+                            "border-radius: 8px; "
+                            "border: 1px solid var(--border-color); "
+                            "margin-top: 8px; width: 100%;"
                         ):
                             # General & Pacing
                             with ui.column().style(_GAP_4_W100):
-                                ui.label("General & Pacing Limits").style(
-                                    _LABEL_SECTION
-                                )
-                                with ui.row().style("gap: 12px; width: 100%;"):
+                                ui.label("General & Pacing").style(_LABEL_SECTION)
+                                with ui.row().style(
+                                    "gap: 12px; width: 100%; align-items: start;"
+                                ):
                                     c_inputs["download_dir"] = (
                                         ui.input(
                                             "Override Directory",
@@ -436,14 +443,14 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                                     )
                                     c_inputs["max_concurrent"] = (
                                         ui.number(
-                                            "Concurrent",
+                                            "Override Max Concurrent",
                                             value=chat_data.get(
                                                 "max_concurrent_downloads", None
                                             ),
                                             format="%.0f",
                                         )
                                         .classes("col")
-                                        .props('outlined dense hint="Max concurrent"')
+                                        .props(_OUTLINED_DENSE)
                                     )
                                     c_delay_val = chat_data.get("download_delay")
                                     if isinstance(c_delay_val, list):
@@ -524,7 +531,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                                     c_formats = chat_data.get("file_formats", {})
                                     with ui.column().classes("col").style("gap: 4px;"):
                                         ui.label("Override Formats:").style(
-                                            "font-size: 11px; color: var(--text-tertiary); margin-left: 4px; margin-bottom: -6px;"
+                                            "font-size: 11px; "
+                                            "color: var(--text-tertiary); "
+                                            "margin-left: 4px; margin-bottom: -6px;"
                                         )
                                         with ui.row().style("gap: 8px; width: 100%;"):
                                             c_inputs["format_audio"] = (
@@ -548,7 +557,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                                                 .props(_PROPS_PLACEHOLDER_ALL)
                                             )
                                         with ui.row().style(
-                                            "gap: 8px; width: 100%; align-items: start; margin-top: 4px;"
+                                            "gap: 8px; width: 100%; "
+                                            "align-items: start; margin-top: 4px;"
                                         ):
                                             c_inputs["format_photo"] = (
                                                 ui.input(
@@ -675,7 +685,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         config["max_concurrent_downloads"] = (
             int(global_inputs["max_concurrent"].value)
             if global_inputs["max_concurrent"].value
-            else 4
+            else 1
         )
         delay_str = (global_inputs["download_delay"].value or "").strip()
         if delay_str:
@@ -706,33 +716,20 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         elif "max_messages" in config:
             del config["max_messages"]
 
-        # File Formats
-        config["file_formats"] = {
-            "audio": [
+        built_formats = {}
+        for k, v in [
+            ("audio", global_inputs["format_audio"]),
+            ("video", global_inputs["format_video"]),
+            ("photo", global_inputs["format_photo"]),
+            ("document", global_inputs["format_document"]),
+        ]:
+            built_formats[k] = [
                 x.strip()
-                for x in _s(global_inputs["format_audio"].value).split(",")
+                for x in (_s(v.value).split(",") if v.value else [])
                 if x.strip()
-            ]
-            or ["all"],
-            "video": [
-                x.strip()
-                for x in _s(global_inputs["format_video"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-            "photo": [
-                x.strip()
-                for x in _s(global_inputs["format_photo"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-            "document": [
-                x.strip()
-                for x in _s(global_inputs["format_document"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-        }
+            ] or ["all"]
+
+        config["file_formats"] = built_formats
 
         built_chats = []
         for c_in in chat_inputs:
@@ -779,58 +776,37 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 chat_obj["max_messages"] = int(c_in["max_messages"].value)
 
             # Chat-specific file_formats
-            chat_formats = {}
-            if _s(c_in["format_audio"].value):
-                chat_formats["audio"] = [
-                    x.strip()
-                    for x in _s(c_in["format_audio"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_video"].value):
-                chat_formats["video"] = [
-                    x.strip()
-                    for x in _s(c_in["format_video"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_photo"].value):
-                chat_formats["photo"] = [
-                    x.strip()
-                    for x in _s(c_in["format_photo"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_document"].value):
-                chat_formats["document"] = [
-                    x.strip()
-                    for x in _s(c_in["format_document"].value).split(",")
-                    if x.strip()
-                ]
-            if chat_formats:
-                chat_obj["file_formats"] = chat_formats
+            from itertools import product
+
+            c_fmts = {}
+            for fmt_key in ["audio", "video", "photo", "document"]:
+                fmt_val = c_in.get(f"format_{fmt_key}")
+                raw_fmt = _s(fmt_val.value if fmt_val else "")
+                c_fmts[fmt_key] = [
+                    x.strip() for x in raw_fmt.split(",") if x.strip()
+                ] or ["all"]
+            chat_obj["file_formats"] = c_fmts
 
             built_chats.append(chat_obj)
-        config["chats"] = built_chats
 
+        config["chats"] = built_chats
         if "chat_id" in config:
             del config["chat_id"]
-        if "last_read_message_id" in config:
-            del config["last_read_message_id"]
 
         save_config_fn(config)
-        ui.notify(
-            "Configuration saved!",
-            type="positive",
-            position="top",
-            icon="check_circle",
-        )
+        ui.notify("Configuration saved.", type="positive")
 
-    with ui.row().style("gap: 12px; justify-content: flex-end; width: 100%;"):
+    with ui.row().style(
+        "gap: 12px; width: 100%; justify-content: center;"
+        " padding-top: 16px; border-top: 1px solid var(--border);"
+    ):
+        ui.button("Save Configuration", on_click=do_save, icon="save").props(
+            'unelevated color="primary"'
+        ).style("font-size: 13px; padding: 6px 24px;")
         ui.button(
             "Reload from Disk",
-            on_click=lambda: ui.navigate.to("/"),
+            on_click=lambda: ui.navigate.reload(),
             icon="refresh",
-        ).props("flat color=grey-7").style("font-size: 13px;")
-        ui.button("Save Configuration", on_click=do_save, icon="check").props(
-            "unelevated color=primary"
-        ).style("font-size: 13px; padding: 8px 24px;")
+        ).props("outline dense color=grey-7").style("font-size: 13px;")
 
     return global_inputs, chat_inputs
