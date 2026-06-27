@@ -453,10 +453,7 @@ def build_setup_wizard(  # NOSONAR
         save_config_fn(config)
         wiz_client = wizard_state.get("client")
         if wiz_client is not None:
-            try:
-                await wiz_client.disconnect()
-            except Exception:
-                pass
+            asyncio.ensure_future(wiz_client.disconnect())
         wizard_dialog.close()
         on_complete_fn()
 
