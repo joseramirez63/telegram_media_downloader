@@ -202,8 +202,8 @@ def index():  # NOSONAR
 
         # ━━━━━ MAIN CONTENT (tabs) ━━━━━
         with ui.column().style(
-            "flex: 1; height: 100vh; padding: 32px 40px;"
-            " overflow-y: auto; background: var(--surface-dim);"
+            "flex: 1; min-height: 100vh; padding: 32px 40px;"
+            " background: var(--surface-dim);"
         ):
             # Account badge (top-right)
             account_badge = ui.html(
