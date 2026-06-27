@@ -44,7 +44,7 @@ def build_debug_tab(config: dict, this_dir: str, log_area_holder: dict):
             ui.log(max_lines=30)
             .classes("terminal-log")
             .style(
-                "width: 100%; min-height: 350px;"
+                "width: 100%; min-height: 500px;"
                 " padding: 12px; font-size: 12px; line-height: 1.6;"
                 " font-family: monospace;"
                 " border: 1px solid var(--border);"
