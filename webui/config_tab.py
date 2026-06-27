@@ -114,18 +114,20 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             " overflow: hidden; background: var(--surface);"
             " border: 1px solid var(--border);"
         ):
-            # Header: title + X
-            with ui.row().classes("items-center justify-between").style(
-                "padding: 20px 24px 0 24px;"
+            # Header: centered title + absolute X
+            with ui.row().classes("justify-center").style(
+                "padding: 20px 24px 0 24px; position: relative;"
             ):
+                ui.element("div").style("flex: 1;")
                 ui.label("Select Download Directory").style(
                     "font-size: 18px; font-weight: 700;"
                     " color: var(--text-primary);"
                     " letter-spacing: -0.01em;"
                 )
-                ui.button(icon="close", on_click=browse_dialog.close).props(
-                    "flat dense round color=grey-6"
-                )
+                with ui.element("div").style("flex: 1; text-align: right;"):
+                    ui.button(icon="close", on_click=browse_dialog.close).props(
+                        "flat dense round color=grey-6"
+                    )
             # Path bar — centered row
             with ui.row().classes("justify-center").style(
                 "padding: 12px 24px 0 24px; gap: 8px;"
@@ -198,9 +200,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     with ui.row().classes("justify-center").style("width: 100%;"):
                         ui.button(
                             name, on_click=lambda fp=full_path: _navigate(fp)
-                        ).props("flat dense color=grey-8").style(
-                            "font-size: 13px; min-width: 200px;"
-                        )
+                        ).props("flat dense color=grey-8").style("font-size: 13px;")
 
             def _navigate(fp):
                 fp = str(fp or "").strip()
