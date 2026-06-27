@@ -145,7 +145,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         "font-size: 13px; padding: 4px 16px;"
                     )
                 dir_list = ui.column().style(
-                    "max-height: 280px; overflow-y: auto;" " width: 100%; gap: 2px;"
+                    "max-height: 280px; overflow-y: auto;"
+                    " width: 90%; max-width: 450px;"
+                    " margin: 0 auto; gap: 2px;"
                 )
             with ui.row().style(
                 "padding: 16px 24px;"
@@ -197,10 +199,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 with dir_list:
                     ui.button(name, on_click=lambda fp=full_path: _navigate(fp)).props(
                         "flat dense color=grey-8"
-                    ).style(
-                        "width: 100%; justify-content: center;"
-                        " font-size: 13px; text-align: center;"
-                    )
+                    ).style("width: 100%;" " font-size: 13px; text-align: center;")
 
             def _navigate(fp):
                 fp = str(fp or "").strip()
