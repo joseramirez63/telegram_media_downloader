@@ -109,6 +109,13 @@ def build_execution_tab(  # NOSONAR
             total_bytes = db.get_total_downloaded_bytes()
             total_gb_label.set_text(db.format_bytes(total_bytes))
 
+    def update_media_counts():
+        if media_counts_label is not None:
+            counts = db.get_download_counts()
+            media_counts_label.set_text(
+                f"{counts['video']} / {counts['photo']}"
+            )
+
     # Metrics row
     with ui.row().style(
         "gap: 32px; margin-bottom: 20px; align-items: end; justify-content: center;"
@@ -131,6 +138,12 @@ def build_execution_tab(  # NOSONAR
                 " color: var(--text-primary); font-variant-numeric: tabular-nums;"
             )
             ui.label("\U0001f4e6 total").style(_FONT_10_500)
+        with ui.column().style(_GAP_ALIGN):
+            media_counts_label = ui.label("\u2014").style(
+                "font-size: 18px; font-weight: 700;"
+                " color: var(--text-secondary); font-variant-numeric: tabular-nums;"
+            )
+            ui.label("\U0001f3ac videos / \U0001f4f7 photos").style(_FONT_10_500)
 
     # Active Downloads card
     with ui.element("div").classes("premium-card").style(
@@ -584,4 +597,5 @@ def build_execution_tab(  # NOSONAR
 
     ui.timer(0.5, update_pending)
     ui.timer(1.0, update_total_gb)
+    ui.timer(2.0, update_media_counts)
     update_total_gb()

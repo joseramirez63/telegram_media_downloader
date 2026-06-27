@@ -136,6 +136,33 @@ def get_total_downloaded_bytes() -> int:
         return 0
 
 
+def get_download_counts() -> dict:
+    """Count downloaded files by media type.
+
+    Returns
+    -------
+    dict
+        Keys ``"video"`` and ``"photo"`` with integer counts.
+    """
+    _ensure_db()
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT media_type, COUNT(*) FROM download_history "
+                "WHERE media_type IS NOT NULL GROUP BY media_type"
+            )
+            result = {"video": 0, "photo": 0}
+            for row in cursor.fetchall():
+                if row[0] in result:
+                    result[row[0]] = row[1]
+            return result
+    except Exception:
+        logger = logging.getLogger("media_downloader")
+        logger.exception("Failed to count downloads by media type")
+        return {"video": 0, "photo": 0}
+
+
 def reset_history():
     """Clear all download history."""
     _ensure_db()
