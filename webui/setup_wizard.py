@@ -346,6 +346,7 @@ def build_setup_wizard(  # NOSONAR
                 "display: none; gap: 6px; padding: 8px;"
                 " border: 1px solid var(--border); border-radius: 8px;"
                 " margin-top: 6px; max-height: 260px; overflow-y: auto;"
+                " width: 100%;"
             )
             with browse_container:
                 browse_list = ui.column().style("gap: 2px;")
@@ -434,7 +435,7 @@ def build_setup_wizard(  # NOSONAR
                         ui.icon(icon, size="xs").style("color: var(--text-tertiary);")
                         ui.label(d["name"]).style(
                             "font-size: 12px; color: var(--text-secondary);"
-                            " flex: 1; white-space: nowrap; overflow: hidden;"
+                            " flex: 1; min-width: 0; white-space: nowrap; overflow: hidden;"
                             " text-overflow: ellipsis;"
                         )
                         ui.button(
