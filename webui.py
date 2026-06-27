@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import sqlite3
 import sys
 
 try:
@@ -31,6 +32,17 @@ from webui.tour import build_tour
 logger = logging.getLogger("webui")
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PADDING_0 = "padding: 0;"
+
+# Enable WAL mode on Telethon session file to reduce lock contention
+# when verify buttons or other auxiliary clients access it concurrently
+_session_path = os.path.join(THIS_DIR, "media_downloader.session")
+if os.path.exists(_session_path):
+    try:
+        _sconn = sqlite3.connect(_session_path, timeout=5)
+        _sconn.execute("PRAGMA journal_mode=WAL")
+        _sconn.close()
+    except Exception:
+        pass
 
 # Suppress Telethon connection cleanup noise on Python 3.13
 logging.getLogger("telethon").setLevel(logging.WARNING)

@@ -11,16 +11,20 @@ from typing import List, Optional, Tuple, Union
 from rich.logging import RichHandler
 from telethon import TelegramClient, events
 from telethon.errors import FileReferenceExpiredError
-from telethon.tl.types import (Document, Message, MessageMediaDocument,
-                               MessageMediaPhoto, Photo)
+from telethon.tl.types import (
+    Document,
+    Message,
+    MessageMediaDocument,
+    MessageMediaPhoto,
+    Photo,
+)
 from tqdm import tqdm
 
 import config_manager
 import db
 from utils.file_management import get_next_name, manage_duplicate_file
 from utils.log import LogFilter
-from utils.meta import (APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION,
-                        print_meta)
+from utils.meta import APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION, print_meta
 from utils.updates import check_for_updates
 
 logging.basicConfig(
@@ -53,6 +57,9 @@ VALID_MODES = ("history", "monitor", "history_monitor")
 
 # Global hook for Web UI to receive progress updates
 UI_PROGRESS_HOOK = None
+
+# Mutex for chat entity resolution to prevent concurrent session access
+_VERIFY_LOCK = asyncio.Lock()
 
 
 def update_config(config: dict):
@@ -229,9 +236,7 @@ def _progress_callback(current: int, total: int, pbar: tqdm) -> None:
             UI_PROGRESS_HOOK(pbar.desc, current, total)
         except RuntimeError:
             UI_PROGRESS_HOOK = None
-            logger.warning(
-                "UI progress hook disconnected; running in headless mode."
-            )
+            logger.warning("UI progress hook disconnected; running in headless mode.")
         except Exception:
             UI_PROGRESS_HOOK = None
             logger.warning(
@@ -1001,38 +1006,36 @@ async def resolve_chat_entity(
     str or None
         The chat title/name if resolved, or None on failure.
     """
-    client = None
-    try:
-        client = TelegramClient(
-            "media_downloader",
-            api_id=api_id,
-            api_hash=api_hash,
-            device_model=DEVICE_MODEL,
-            system_version=SYSTEM_VERSION,
-            app_version=APP_VERSION,
-            lang_code=LANG_CODE,
-        )
-        await client.connect()
-        if not await client.is_user_authorized():
+    async with _VERIFY_LOCK:
+        client = None
+        try:
+            client = TelegramClient(
+                "media_downloader",
+                api_id=api_id,
+                api_hash=api_hash,
+                device_model=DEVICE_MODEL,
+                system_version=SYSTEM_VERSION,
+                app_version=APP_VERSION,
+                lang_code=LANG_CODE,
+            )
+            await client.connect()
+            if not await client.is_user_authorized():
+                return None
+            entity = await client.get_entity(chat_id)
+            name = getattr(entity, "title", None) or getattr(entity, "first_name", None)
+            if name:
+                last = getattr(entity, "last_name", "")
+                if last:
+                    name = f"{name} {last}".strip()
+            return name
+        except Exception:
             return None
-        entity = await client.get_entity(chat_id)
-        name = (
-            getattr(entity, "title", None)
-            or getattr(entity, "first_name", None)
-        )
-        if name:
-            last = getattr(entity, "last_name", "")
-            if last:
-                name = f"{name} {last}".strip()
-        return name
-    except Exception:
-        return None
-    finally:
-        if client is not None:
-            try:
-                await client.disconnect()
-            except Exception:
-                pass
+        finally:
+            if client is not None:
+                try:
+                    await client.disconnect()
+                except Exception:
+                    pass
 
 
 async def send_auth_code(api_id: int, api_hash: str, phone: str) -> dict:

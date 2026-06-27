@@ -356,6 +356,7 @@ def build_setup_wizard(  # NOSONAR
                 verify_label.set_text("Enter a chat ID or @username first.")
                 verify_label.style("color: var(--text-tertiary);")
                 return
+            verify_btn_ref["btn"].set_enabled(False)
             verify_label.set_text("Verifying...")
             verify_label.style("color: var(--text-secondary);")
             try:
@@ -369,9 +370,8 @@ def build_setup_wizard(  # NOSONAR
                     entity = await asyncio.wait_for(
                         wiz_client.get_entity(chat_id_val), timeout=8.0
                     )
-                    name = (
-                        getattr(entity, "title", None)
-                        or getattr(entity, "first_name", None)
+                    name = getattr(entity, "title", None) or getattr(
+                        entity, "first_name", None
                     )
                     if name:
                         last = getattr(entity, "last_name", "")
@@ -405,6 +405,7 @@ def build_setup_wizard(  # NOSONAR
             else:
                 verify_label.set_text("Could not resolve chat. Check the ID/username.")
                 verify_label.style("color: var(--negative);")
+            verify_btn_ref["btn"].set_enabled(True)
 
     def _go_back():
         wizard_state["step"] = max(1, wizard_state["step"] - 1)

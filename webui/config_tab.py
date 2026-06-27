@@ -592,6 +592,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         else:
             verify_lbl.set_text("Could not resolve. Check the ID/username.")
             verify_lbl.style("color: var(--negative);")
+        btn = c_inputs.get("verify_btn_ref", {}).get("btn")
+        if btn:
+            btn.set_enabled(True)
 
     def _toggle_verify_config(c_inputs, btn_ref):
         verified_name = c_inputs.get("_verified_name", "")
@@ -607,6 +610,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 btn.set_text("Verify Chat")
                 btn.props("flat dense color=info size=sm")
         else:
+            btn = btn_ref.get("btn")
+            if btn:
+                btn.set_enabled(False)
             task = asyncio.ensure_future(_verify_chat_config(c_inputs))
 
     # ── Save / Reload Actions ──
