@@ -312,8 +312,9 @@ def index():  # NOSONAR
                         ui.log(max_lines=500)
                         .classes("terminal-log")
                         .style(
-                            "width: 100%; min-height: 400px; padding: 16px;"
+                            "width: 100%; min-height: 500px; padding: 16px;"
                             " font-size: 13px; line-height: 1.7;"
+                            " overflow: visible !important;"
                         )
                     )
                     log_area_holder["widget"] = log_area
