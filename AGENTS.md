@@ -486,13 +486,9 @@ NiceGUI's event loop within dialog context.
 - **Permissions**: `contents: read` (minimum privilege).
 - **Jobs**: `test` (18 OS×Python matrix) + `coverage` (separate, after tests).
 - **Strategy**: `fail-fast: false` — one OS failure doesn't cancel others.
-- **Fork safety**: coverage job conditionally runs only for the main repo
-  (`github.event.pull_request.head.repo.full_name == github.repository`),
-  preventing Codecov token exposure on forks.
 - **SHA pinning**: all actions pinned to full commit SHAs
   (`checkout@11bd71901bbe5b1630ceea73d27597364c9af683`,
-  `setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b`,
-  `codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238`)
+  `setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b`)
   per SonarCloud S7637.
 - Python versions: 3.8 through 3.13 on ubuntu, macos, windows.
 
