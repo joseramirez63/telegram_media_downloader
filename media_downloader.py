@@ -10,21 +10,17 @@ from typing import List, Optional, Tuple, Union
 
 from rich.logging import RichHandler
 from telethon import TelegramClient, events
-from telethon.errors import FileReferenceExpiredError
-from telethon.tl.types import (
-    Document,
-    Message,
-    MessageMediaDocument,
-    MessageMediaPhoto,
-    Photo,
-)
+from telethon.errors import FileReferenceExpiredError, FloodWaitError
+from telethon.tl.types import (Document, Message, MessageMediaDocument,
+                               MessageMediaPhoto, Photo)
 from tqdm import tqdm
 
 import config_manager
 import db
 from utils.file_management import get_next_name, manage_duplicate_file
 from utils.log import LogFilter
-from utils.meta import APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION, print_meta
+from utils.meta import (APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION,
+                        print_meta)
 from utils.updates import check_for_updates
 
 logging.basicConfig(
@@ -394,6 +390,7 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
         Current message id.
     """
     for retry in range(3):
+        file_name = None
         if chat_id not in FAILED_IDS:
             FAILED_IDS[chat_id] = []
         if chat_id not in DOWNLOADED_IDS:
@@ -500,7 +497,8 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
                 "retrying after 5 seconds",
                 message.id,
             )
-            _cleanup_partial(file_name)
+            if file_name:
+                _cleanup_partial(file_name)
             await asyncio.sleep(5)
             if retry == 2:
                 logger.error(
@@ -508,8 +506,17 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
                     message.id,
                 )
                 FAILED_IDS[chat_id].append(message.id)
+        except FloodWaitError as e:
+            logger.warning(
+                "Message[%d]: flood wait %ds, sleeping...",
+                message.id,
+                e.seconds,
+            )
+            await asyncio.sleep(e.seconds)
+            continue
         except Exception as e:
-            _cleanup_partial(file_name)
+            if file_name:
+                _cleanup_partial(file_name)
             msg = str(e)
             if "disconnected" in msg.lower() or "connection" in msg.lower():
                 logger.info(
@@ -602,7 +609,7 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
         Custom directory path for downloads. If None, uses default structure.
     max_concurrent_downloads: int
         Max number of files to download simultaneously. 1 = fully sequential.
-        Default 4. Higher values speed up downloads but increase ban risk.
+        Default 1. Higher values speed up downloads but increase ban risk.
     download_delay: Optional[Union[float, List[float]]]
         Delay between starting each file download (seconds).
         Pass a float for a fixed delay, or [min, max] for a random range.

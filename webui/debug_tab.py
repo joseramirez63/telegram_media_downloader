@@ -9,6 +9,7 @@ from nicegui import ui
 
 import db
 import media_downloader
+from utils import __version__
 from utils.obfuscate import obfuscate_chat_name, obfuscate_config
 
 
@@ -84,7 +85,7 @@ def build_debug_tab(config: dict, this_dir: str, log_area_holder: dict):
         lines.append("── System ──")
         lines.append(f"  Python      : {sys.version}")
         lines.append(f"  Platform    : {platform.platform()}")
-        lines.append(f"  App version : v3.5.0")
+        lines.append(f"  App version : v{__version__}")
         lines.append(f"  Session     : {safe.get('_session', '?')}")
         lines.append("")
 

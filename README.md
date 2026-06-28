@@ -159,7 +159,7 @@ proxy:
   hostname: 11.22.33.44
   port: 1234
   username: your_username    # optional
-  password: ${PROXY_PASSWORD}    # optional
+  password: your_password    # optional
 ```
 
 Supports `socks4`, `socks5`, `http`.

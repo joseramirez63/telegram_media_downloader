@@ -673,7 +673,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         config["max_concurrent_downloads"] = (
             int(global_inputs["max_concurrent"].value)
             if global_inputs["max_concurrent"].value
-            else 4
+            else 1
         )
         delay_str = (global_inputs["download_delay"].value or "").strip()
         if delay_str:
