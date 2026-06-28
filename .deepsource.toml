@@ -11,6 +11,11 @@ enabled = true
   # DeepSource uses this to determine which language features are valid.
   # 3.8 is the lower bound to catch incompatibilities with older syntax.
   runtime_version = "3.8"
+  exclude_patterns = [
+    "*.md",
+    "docs/**",
+    "**/README.md",
+  ]
 
   [[analyzers.rules]]
   code = "PYL-R0201"
