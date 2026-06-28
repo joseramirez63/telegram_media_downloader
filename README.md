@@ -3,7 +3,7 @@
 
 <p align="center">
 <a href="https://app.deepsource.com/gh/xodaaaa/telegram_media_downloader"><img alt="DeepSource" src="https://app.deepsource.com/gh/xodaaaa/telegram_media_downloader.svg"></a>
-<a href="https://github.com/xodaaaa/telegram_media_downloader/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://github.com/xodaaaa/telegram_media_downloader/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
 <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
