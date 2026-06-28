@@ -122,8 +122,8 @@ def index():  # NOSONAR
 
         # ━━━━━ LEFT SIDEBAR ━━━━━
         with ui.column().classes("sidebar").style(
-            "width: 260px; min-width: 260px; height: 100vh;"
-            " position: sticky; top: 0; padding: 24px 16px;"
+            "width: 260px; min-width: 260px; min-height: 100vh;"
+            " padding: 24px 16px;"
             " display: flex; flex-direction: column;"
             " justify-content: space-between;"
         ):
