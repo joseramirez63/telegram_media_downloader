@@ -144,6 +144,33 @@ def index():  # NOSONAR
                             " letter-spacing: 0.02em;"
                         )
 
+                # Account badge in sidebar
+                account_badge = ui.html(
+                    '<span class="status-badge status-free">\u2014 Account</span>'
+                ).style("padding: 4px 16px 8px 16px;")
+
+                async def _check_account():
+                    try:
+                        info = await media_downloader.check_account_premium(config)
+                    except Exception:
+                        return
+                    if info is None:
+                        return
+                    name = info.get("first_name", "")
+                    last = info.get("last_name", "")
+                    full = (name + " " + last).strip() or info.get("username", "?")
+                    if info.get("premium"):
+                        account_badge.content = (
+                            '<span class="status-badge status-premium">'
+                            f"\u2b50 {full} (Premium)</span>"
+                        )
+                    else:
+                        account_badge.content = (
+                            f'<span class="status-badge status-free">' f"{full}</span>"
+                        )
+
+                ui.timer(0.5, _check_account, once=True)
+
                 ui.html('<hr class="divider" style="margin: 0 0 8px 0;">')
                 ui.label("WORKSPACE").style(
                     "font-size: 10px; font-weight: 600;"
@@ -205,33 +232,6 @@ def index():  # NOSONAR
             "flex: 1; min-height: 100vh; padding: 32px 40px;"
             " background: var(--surface-dim);"
         ):
-            # Account badge (top-right)
-            account_badge = ui.html(
-                '<span class="status-badge status-free">\u2014 Account</span>'
-            ).style("position: absolute; top: 16px; right: 40px; z-index: 10;")
-
-            async def _check_account():
-                try:
-                    info = await media_downloader.check_account_premium(config)
-                except Exception:
-                    return
-                if info is None:
-                    return
-                name = info.get("first_name", "")
-                last = info.get("last_name", "")
-                full = (name + " " + last).strip() or info.get("username", "?")
-                if info.get("premium"):
-                    account_badge.content = (
-                        '<span class="status-badge status-premium">'
-                        f"\u2b50 {full} (Premium)</span>"
-                    )
-                else:
-                    account_badge.content = (
-                        f'<span class="status-badge status-free">' f"{full}</span>"
-                    )
-
-            ui.timer(0.5, _check_account, once=True)
-
             # Media Viewing Modal
             with ui.dialog().props("maximized") as media_modal, ui.card().style(
                 "background: #000; max-width: 900px; width: 90%;"
