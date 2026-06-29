@@ -9,7 +9,7 @@ Last updated: **2026-06-28**
 - Added `_get_chats_to_process()`, `_resolve_date_filters()`, `reset_runtime_state()` helpers
 - Added `ActiveDownloadEntry` dataclass in execution_tab
 - Upgraded all dependencies (nicegui 3.13, telethon 1.44, rich 15.0, tqdm 4.68.3, cryptg 0.5.2)
-- Python 3.12 minimum, requirements unified into single `requirements.txt`
+- Python 3.10 minimum, requirements unified into single `requirements.txt`
 - Account badge temporarily removed from sidebar
 - Suppressed `telethon.sessions` warnings, demoted `check_account_premium` log
 
@@ -472,14 +472,6 @@ NiceGUI's event loop within dialog context.
   prevent test runs from touching the real database and to avoid
   Windows SQLite file-lock issues during cleanup. Same pattern used in
   `test_db.py` (2 classes) and `test_config_manager.py`.
-  - **Python 3.8/3.9 compat**: `ignore_cleanup_errors` was added in Python
-    3.10. All four sites use a `try/except TypeError` fallback:
-    ```python
-    try:
-        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
-    except TypeError:
-        self._tmpdir = tempfile.TemporaryDirectory()
-    ```
   - `test_monitor.py` classes create fresh `asyncio` event loops in `setUp()`
   to avoid conflicts with `test_media_downloader.py`'s `tearDownClass` loop
   closure on Python 3.13.
@@ -502,7 +494,7 @@ NiceGUI's event loop within dialog context.
 
 ### `code-checks.yml` — Linting
 - **Trigger**: push + pull_request on `master` + `workflow_dispatch` (manual).
-- **Steps**: checkout → setup-python 3.12 → `make dev_install` → `pre-commit
+- **Steps**: checkout → setup-python 3.10 → `make dev_install` → `pre-commit
   run --all-files --show-diff-on-failure`.
 - Uses `pip install pre-commit` directly instead of `pre-commit/action`.
 - **Black**: runs with `--check` flag — only verifies formatting, never
@@ -579,5 +571,5 @@ Pattern that works every time:
   `rich>=15.0`, `tqdm>=4.68.3`, `cryptg>=0.5.2`.
 - **Development**: `pytest`, `black`, `isort`, `mypy`, `pylint`,
   `pre-commit`. See `dev-requirements.txt` and `Makefile`.
-- **Python**: 3.12 minimum. All CI matrices use Python 3.12.
+- **Python**: 3.10 minimum. All CI matrices use Python 3.10.
 - **Account badge**: temporarily removed from sidebar (caused session lock issues with `check_account_premium`).

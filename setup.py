@@ -22,7 +22,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Internet",
         "Topic :: Communications",
         "Topic :: Communications :: Chat",
@@ -34,5 +34,5 @@ setup(
         "Community": "https://t.me/tgmdnews",
         "Source": "https://github.com/xodaaaa/telegram_media_downloader",
     },
-    python_requires=">=3.12",
+    python_requires=">=3.10",
 )

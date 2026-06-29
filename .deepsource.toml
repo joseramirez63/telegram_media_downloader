@@ -10,7 +10,7 @@ enabled = true
   # Minimum Python version supported by the project (3.8–3.13).
   # DeepSource uses this to determine which language features are valid.
   # 3.8 is the lower bound to catch incompatibilities with older syntax.
-  runtime_version = "3.12"
+  runtime_version = "3.10"
   exclude_patterns = [
     "*.md",
     "docs/**",
