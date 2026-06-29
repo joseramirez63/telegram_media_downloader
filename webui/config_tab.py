@@ -763,6 +763,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     if browse_state["open"]:
                         browse_container.style("display: none;")
                         browse_state["open"] = False
+                        browse_btn_ref["btn"].set_text("Browse My Chats")
+                        browse_btn_ref["btn"].props("flat dense color=grey-7")
                         return
                     if not browse_state.get("loaded"):
                         browse_state["dialogs"] = await media_downloader.get_user_dialogs(
@@ -772,13 +774,17 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         browse_state["loaded"] = True
                     browse_state["open"] = True
                     browse_container.style("display: block;")
+                    browse_btn_ref["btn"].set_text("Hide My Chats")
+                    browse_btn_ref["btn"].props("flat dense color=positive")
                     _render_browse()
 
-                ui.button(
+                browse_btn_ref = {}
+                _browse_btn = ui.button(
                     "Browse My Chats", icon="list", on_click=_toggle_browse_dialog
                 ).props("flat dense color=grey-7").style(
                     "font-size: 12px; width: 100%; justify-content: flex-start; margin-top: 4px;"
                 )
+                browse_btn_ref["btn"] = _browse_btn
 
             with ui.row().style("gap: 8px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border);"):
                 ui.button("Cancel", on_click=add_dialog.close).props("flat dense color=grey-7").style("font-size: 13px;")
