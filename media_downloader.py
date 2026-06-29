@@ -957,6 +957,7 @@ async def register_monitor_handler(  # NOSONAR
             BACKLOG_DONE[chat_id] = BACKLOG_DONE.get(chat_id, 0) + 1
 
         chat_conf["last_read_message_id"] = message.id
+        update_config(global_config)
 
     logger.info("Monitor mode listening for chat_id: %s", chat_id)
 
