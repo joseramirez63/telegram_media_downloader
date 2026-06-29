@@ -647,8 +647,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         add_dialog = ui.dialog()
         with add_dialog, ui.card().style(
             "width: 480px; max-width: 90vw; border-radius: var(--radius-xl);"
-            " overflow: hidden; background: var(--surface);"
+            " overflow-x: hidden; background: var(--surface);"
             " margin: auto; border: 1px solid var(--border);"
+            " align-items: center !important;"
         ):
             with ui.row().classes("items-center justify-between").style(
                 "padding: 20px 24px 0 24px;"
