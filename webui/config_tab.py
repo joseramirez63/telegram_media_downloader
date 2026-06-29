@@ -358,7 +358,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             ui.label(
                 "Not recommended with 4+ chats. May cause Telegram flood limits."
             ).style(
-                "font-size: 10px; color: var(--text-tertiary); margin-top: 2px;"
+                "font-size: 10px; color: var(--warning); margin-top: 2px;"
             )
 
         with ui.expansion("File Formats (Comma-separated)", icon="folder_zip").props(
