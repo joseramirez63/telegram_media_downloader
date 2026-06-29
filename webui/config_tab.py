@@ -806,20 +806,35 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 )
                 browse_btn_ref["btn"] = _browse_btn
 
-            with ui.row().style("gap: 8px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border);"):
+            with ui.row().style("gap: 8px; justify-content: space-between; padding: 16px 24px; border-top: 1px solid var(--border);"):
+                _add_count = {"n": 0}
+                _done_btn = ui.button("Done", on_click=add_dialog.close).props("unelevated color=primary").style("font-size: 13px; padding: 6px 24px;")
+                _done_btn.set_visibility(False)
                 ui.button("Cancel", on_click=add_dialog.close).props("flat dense color=grey-7").style("font-size: 13px;")
+
                 def _confirm_add():
                     chat_val = (chat_in.value or "").strip()
-                    if chat_val:
-                        if len(chat_inputs) + 1 >= 4:
-                            ui.notify(
-                                "Parallel Downloads is not recommended with 4+ chats.",
-                                type="warning",
-                                position="top",
-                            )
-                        add_chat_ui({"chat_id": chat_val, "last_read_message_id": 0, "ids_to_retry": []})
+                    if not chat_val:
+                        return
+                    if len(chat_inputs) + 1 >= 4:
+                        ui.notify(
+                            "Parallel Downloads is not recommended with 4+ chats.",
+                            type="warning",
+                            position="top",
+                        )
+                    add_chat_ui({"chat_id": chat_val, "last_read_message_id": 0, "ids_to_retry": []})
+                    _add_count["n"] += 1
+                    chat_in.set_value("")
+                    chat_in.props("outlined dense")
+                    verify_label.set_text("")
+                    if _add_count["n"] >= 3:
                         add_dialog.close()
-                ui.button("Add Chat", on_click=_confirm_add, icon="add").props("unelevated color=primary").style("font-size: 13px; padding: 6px 24px;")
+                    else:
+                        _done_btn.set_visibility(True)
+                        verify_label.set_text(f"{_add_count['n']} of 3 chats added")
+                        verify_label.style("color: var(--text-secondary); font-size: 12px; font-weight: 500;")
+
+                _add_btn = ui.button("Add Chat", on_click=_confirm_add, icon="add").props("unelevated color=primary").style("font-size: 13px; padding: 6px 24px;")
 
         add_dialog.open()
 

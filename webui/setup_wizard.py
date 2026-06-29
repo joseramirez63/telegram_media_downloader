@@ -292,18 +292,47 @@ def build_setup_wizard(  # NOSONAR
 
     # ── Step 3 ──
     def _render_step3():
+        if "pending_chats" not in wizard_state:
+            wizard_state["pending_chats"] = []
+
         with content_area:
-            ui.label("Enter the chat or channel you want to download from.").style(
+            ui.label("Enter up to 3 chats or channels you want to download from.").style(
                 _TEXT_SUBTITLE
             )
-            with ui.row().style("gap: 8px; align-items: flex-end;"):
+
+            # Show already-added chats
+            pending_list = ui.column().style("gap: 4px; width: 100%;")
+            def _refresh_pending():
+                pending_list.clear()
+                for i, pc in enumerate(wizard_state["pending_chats"]):
+                    idx = i
+                    with pending_list:
+                        with ui.row().style("gap: 6px; align-items: center;"):
+                            ui.label(pc["name"]).style(
+                                "font-size: 13px; color: var(--positive); font-weight: 500;"
+                            )
+                            ui.button(
+                                icon="close", on_click=lambda idx=idx: _remove_pending(idx)
+                            ).props("flat dense round size=sm color=grey-6")
+                if wizard_state["pending_chats"]:
+                    ui.separator().style("opacity: 0.3; margin: 4px 0;")
+
+            def _remove_pending(idx):
+                wizard_state["pending_chats"].pop(idx)
+                _refresh_pending()
+                if len(wizard_state["pending_chats"]) < 3:
+                    _add_row.set_visibility(True)
+                    _max_label.set_visibility(False)
+
+            _refresh_pending()
+
+            # Input row (hidden when 3 chats added)
+            _add_row = ui.row().style("gap: 8px; align-items: flex-end;")
+            with _add_row:
                 chat_in = (
                     ui.input(
                         "Chat ID / @username",
-                        value=(
-                            wizard_state.get("verified_name")
-                            or wizard_state.get("chat_id", "")
-                        ),
+                        value="",
                         placeholder="123456789 or @channelname",
                     )
                     .classes("col")
@@ -320,6 +349,12 @@ def build_setup_wizard(  # NOSONAR
                 )
                 verify_btn_ref["btn"] = _verify_btn
             verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
+            _max_label = ui.label("Maximum 3 chats added.").style(
+                "display: none; font-size: 11px; color: var(--text-tertiary);"
+            )
+            if len(wizard_state["pending_chats"]) >= 3:
+                _add_row.set_visibility(False)
+                _max_label.set_visibility(True)
 
             # Browse My Chats toggle
             browse_state = {
@@ -460,26 +495,27 @@ def build_setup_wizard(  # NOSONAR
                 _render_browse_page()
 
         def _select_dialog(dialog):
-            wizard_state["chat_id"] = str(dialog["id"])
-            wizard_state["verified_name"] = dialog["name"]
-            chat_in.set_value(dialog["name"])
-            chat_in.props(_PROPS_DENSE + ' color="positive"')
-            verify_label.set_text("Chat selected")
-            verify_label.style(
-                "color: var(--positive); font-size: 12px; font-weight: 500;"
-            )
-            verify_btn_ref["btn"].set_text("Change")
-            verify_btn_ref["btn"].props("outline dense color=positive")
+            wizard_state["pending_chats"].append({
+                "chat_id": str(dialog["id"]),
+                "name": dialog["name"],
+            })
+            chat_in.set_value("")
+            chat_in.props(_PROPS_DENSE)
+            verify_label.set_text("")
             browse_container.style("display: none;")
             browse_state["open"] = False
             browse_btn_ref["btn"].set_text("Browse My Chats")
             browse_btn_ref["btn"].props("flat dense color=grey-7")
-            if len(config.get("chats", [])) + 1 >= 4:
+            if len(config.get("chats", [])) + len(wizard_state["pending_chats"]) >= 4:
                 ui.notify(
                     "Parallel Downloads is not recommended with 4+ chats.",
                     type="warning",
                     position="top",
                 )
+            _refresh_pending()
+            if len(wizard_state["pending_chats"]) >= 3:
+                _add_row.set_visibility(False)
+                _max_label.set_visibility(True)
 
         with footer_area:
             ui.button("Back", on_click=_go_back).props(_FLAT_GREY).style(_FONT_13)
@@ -496,15 +532,6 @@ def build_setup_wizard(  # NOSONAR
                 ).style(_FONT_13 + " padding: 6px 24px;")
 
         async def _toggle_verify():
-            verified = wizard_state.get("verified_name", "")
-            if verified:
-                chat_in.set_value(wizard_state["chat_id"])
-                chat_in.props(_PROPS_DENSE)
-                wizard_state["verified_name"] = ""
-                verify_label.set_text("")
-                verify_btn_ref["btn"].set_text("Verify")
-                verify_btn_ref["btn"].props("outline dense color=info")
-                return
             chat_val = str(chat_in.value).strip()
             if not chat_val:
                 verify_label.set_text("Enter a chat ID or @username first.")
@@ -542,16 +569,26 @@ def build_setup_wizard(  # NOSONAR
                     logger.warning("resolve_chat_entity timeout/error for %s", chat_id_val)
                     name = None
             if name:
-                wizard_state["chat_id"] = str(chat_val)
-                wizard_state["verified_name"] = name
-                chat_in.set_value(name)
-                chat_in.props(_PROPS_DENSE + ' color="positive"')
-                verify_label.set_text("Chat detected")
+                wizard_state["pending_chats"].append({
+                    "chat_id": str(chat_val),
+                    "name": name,
+                })
+                chat_in.set_value("")
+                chat_in.props(_PROPS_DENSE)
+                verify_label.set_text("Chat added")
                 verify_label.style(
                     "color: var(--positive); font-size: 12px; font-weight: 500;"
                 )
-                verify_btn_ref["btn"].set_text("Change")
-                verify_btn_ref["btn"].props("outline dense color=positive")
+                _refresh_pending()
+                if len(wizard_state["pending_chats"]) >= 3:
+                    _add_row.set_visibility(False)
+                    _max_label.set_visibility(True)
+                if len(config.get("chats", [])) + len(wizard_state["pending_chats"]) >= 4:
+                    ui.notify(
+                        "Parallel Downloads is not recommended with 4+ chats.",
+                        type="warning",
+                        position="top",
+                    )
             else:
                 verify_label.set_text("Could not resolve chat. Check the ID/username.")
                 verify_label.style("color: var(--negative);")
@@ -562,21 +599,23 @@ def build_setup_wizard(  # NOSONAR
         _render()
 
     def _finish(chat_val, skip=False):
-        chat_val = str(chat_val).strip()
-        if not skip and chat_val:
-            original_id = wizard_state.get("chat_id", chat_val)
-            try:
-                chat_id_val = int(original_id)
-            except ValueError:
-                chat_id_val = original_id
-            config["chat_id"] = chat_id_val
-            config["chats"] = [
-                {
+        if not skip and wizard_state["pending_chats"]:
+            config["chats"] = []
+            for pc in wizard_state["pending_chats"]:
+                chat_id_val = pc["chat_id"]
+                try:
+                    chat_id_val = int(chat_id_val)
+                except ValueError:
+                    pass
+                config["chats"].append({
                     "chat_id": chat_id_val,
                     "last_read_message_id": 0,
                     "ids_to_retry": [],
-                }
-            ]
+                })
+            if config["chats"]:
+                config["chat_id"] = config["chats"][0]["chat_id"]
+        elif skip:
+            pass
         if "download_delay" not in config:
             config["download_delay"] = 20
         if "max_concurrent_downloads" not in config:
