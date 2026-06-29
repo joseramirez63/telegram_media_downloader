@@ -19,8 +19,6 @@ except ImportError:
     print("  or")
     print("  pip install -r requirements.txt\n")
     sys.exit(1)
-
-import media_downloader
 from config_manager import load_config, save_config
 from webui.config_tab import build_config_tab
 from webui.execution_tab import build_execution_tab
@@ -152,33 +150,6 @@ def index():  # NOSONAR
                             " color: var(--text-tertiary);"
                             " letter-spacing: 0.02em;"
                         )
-
-                # Account badge in sidebar
-                account_badge = ui.html(
-                    '<span class="status-badge status-free">\u2014 Account</span>'
-                ).style("padding: 4px 16px 8px 16px;")
-
-                async def _check_account():
-                    try:
-                        info = await media_downloader.check_account_premium(config)
-                    except Exception:
-                        return
-                    if info is None:
-                        return
-                    name = info.get("first_name", "")
-                    last = info.get("last_name", "")
-                    full = (name + " " + last).strip() or info.get("username", "?")
-                    if info.get("premium"):
-                        account_badge.content = (
-                            '<span class="status-badge status-premium">'
-                            f"\u2b50 {full} (Premium)</span>"
-                        )
-                    else:
-                        account_badge.content = (
-                            f'<span class="status-badge status-free">' f"{full}</span>"
-                        )
-
-                ui.timer(0.5, _check_account, once=True)
 
                 ui.html('<hr class="divider" style="margin: 0 0 8px 0;">')
                 ui.label("WORKSPACE").style(
