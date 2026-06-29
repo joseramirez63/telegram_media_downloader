@@ -188,33 +188,26 @@ def build_execution_tab(  # NOSONAR
             else:
                 empty_state_ref["el"].style("")
 
-    # Buttons
-    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 4px;"):
-        ui.button(
-            "Start Download",
-            on_click=lambda: ui.timer(0.0, run_downloader, once=True),
-            icon="play_arrow",
-        ).props('unelevated color="primary"').style(
-            "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
-        )
+    # Buttons — single row
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
-        ui.label(
-            "Downloads backlog then monitors for new media"
-        ).style(
-            "flex: 1; font-size: 10px; color: var(--text-tertiary);"
-            " text-align: center;"
-        )
-
-    with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
-        stop_dl_btn = (
+        start_btn = (
             ui.button(
-                "Stop Download",
+                "Start Download",
+                on_click=lambda: ui.timer(0.0, run_downloader, once=True),
+                icon="play_arrow",
+            )
+            .props('unelevated color="primary"')
+            .style("flex: 1; height: 48px; font-size: 14px; font-weight: 600;")
+        )
+        stop_btn = (
+            ui.button(
+                "Stop",
                 on_click=lambda: stop_download_fn["fn"](),
                 icon="stop",
             )
             .props('outline color="negative"')
             .style(
-                "flex: 1; height: 40px; font-size: 13px;"
+                "min-width: 80px; height: 48px; font-size: 13px;"
                 " font-weight: 500; display: none;"
             )
         )
@@ -399,6 +392,7 @@ def build_execution_tab(  # NOSONAR
             ui.notify("Downloader is already running!", type="warning")
             return
         is_running["value"] = True
+        switched_to_monitor = False
         media_downloader.reset_runtime_state()
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
@@ -411,10 +405,13 @@ def build_execution_tab(  # NOSONAR
             last_known_bytes.clear()
             _update_empty_state()
             update_status("Running", "status-running")
+            start_btn.set_text("Downloading...")
+            start_btn.props('color="grey"')
+            start_btn.disable()
+            stop_btn.style("display: block;")
             ui.notify("Initializing Telegram Client...", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
             fresh_config = load_config_fn()
-            stop_dl_btn.style("display: block;")
             updated_config = await media_downloader.begin_import(
                 fresh_config, pagination_limit=100, client_ref=download_client_ref
             )
@@ -440,8 +437,9 @@ def build_execution_tab(  # NOSONAR
             else:
                 _log_widget().push("Backlog complete. Switching to monitor mode...")
                 ui.notify("Switching to monitor mode...", type="info")
+                start_btn.set_text("Monitoring...")
+                switched_to_monitor = True
                 is_running["value"] = False
-                stop_dl_btn.style(_DISPLAY_NONE)
                 download_client_ref["client"] = None
                 # Start monitor phase
                 media_downloader.reset_runtime_state()
@@ -451,7 +449,6 @@ def build_execution_tab(  # NOSONAR
                 fresh_config2 = load_config_fn()
                 client = await media_downloader.begin_monitor(fresh_config2)
                 download_client_ref["client"] = client
-                stop_dl_btn.style("display: block;")
                 _log_widget().push("Monitor active. Listening for new media...")
                 ui.notify(
                     "Monitor mode active. Listening for new messages...",
@@ -465,13 +462,16 @@ def build_execution_tab(  # NOSONAR
             _log_widget().push(f"Error: {str(e)}")
             ui.notify(f"Error: {str(e)}", type="negative", position="top")
         finally:
-            if not is_running["value"]:
+            if not switched_to_monitor:
                 media_downloader.UI_PROGRESS_HOOK = None
                 main_logger.removeHandler(ui_logger)
-                stop_dl_btn.style(_DISPLAY_NONE)
+                start_btn.set_text("Start Download")
+                start_btn.props('color="primary"')
+                start_btn.enable()
+                stop_btn.style("display: none;")
                 download_client_ref["client"] = None
                 _update_empty_state()
-            is_running["value"] = False
+                is_running["value"] = False
             fresh = load_config_fn()
             media_downloader.update_config(fresh)
             update_total_gb()
@@ -483,6 +483,10 @@ def build_execution_tab(  # NOSONAR
             except Exception:
                 pass
             download_client_ref["client"] = None
+        start_btn.set_text("Start Download")
+        start_btn.props('color="primary"')
+        start_btn.enable()
+        stop_btn.style("display: none;")
         ui.notify("Download stopped. Progress saved.", type="info")
 
     stop_download_fn["fn"] = stop_download
