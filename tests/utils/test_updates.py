@@ -36,7 +36,7 @@ class UpdatesTestCase(unittest.TestCase):
         new=mock.MagicMock(return_value=FakeHTTPSConnection(200)),
     )
     @mock.patch("utils.updates.__version__", new="0.0.1")
-    @mock.patch("utils.updates.Console")
+    @mock.patch("utils.updates._console")
     @mock.patch("utils.updates.Markdown")
     def test_update(self, mock_markdown, mock_console):
         check_for_updates()
@@ -50,17 +50,17 @@ class UpdatesTestCase(unittest.TestCase):
             f"Find more details about the latest release here - {html_url}"
         )
         mock_markdown.assert_called_with(expected_message)
-        mock_console.return_value.print.assert_called_once()
+        mock_console.print.assert_called_once()
 
     @mock.patch(
         "utils.updates.http.client.HTTPSConnection",
         new=mock.MagicMock(return_value=FakeHTTPSConnection(500)),
     )
-    @mock.patch("utils.updates.Console")
+    @mock.patch("utils.updates._console")
     def test_exception(self, mock_console):
         check_for_updates()
         exception_message: str = (
             "Following error occured when checking for updates\n"
             "<class 'json.decoder.JSONDecodeError'>, Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
         )
-        mock_console.return_value.log.assert_called_with(exception_message)
+        mock_console.log.assert_called_with(exception_message)

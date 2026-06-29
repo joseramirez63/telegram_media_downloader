@@ -30,7 +30,7 @@ repos:
         entry: mypy
         types: [python]
         args: [--ignore-missing-imports]
-        files: utils/|media_downloader.py
+        files: utils/|media_downloader.py|config_manager.py|db.py
         exclude: tests/
 -   repo: https://github.com/pycqa/pylint
     rev: v2.17.7
@@ -45,5 +45,5 @@ repos:
           "-sn", # Don't display the score
           "--rcfile=pylintrc" # Link to your config file
         ]
-        files: utils/|media_downloader.py
+        files: utils/|media_downloader.py|config_manager.py|db.py
         exclude: tests/

@@ -8,6 +8,8 @@ from rich.markdown import Markdown
 
 from . import __version__
 
+_console = Console()
+
 
 # pylint: disable = C0301
 def check_for_updates() -> None:
@@ -15,7 +17,7 @@ def check_for_updates() -> None:
 
     Using Github API checks for new release and prints information of new release if available.
     """
-    console = Console()
+    console = _console
     try:
         headers: dict = {
             "Content-Type": "application/json",

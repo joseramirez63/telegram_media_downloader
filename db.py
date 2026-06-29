@@ -9,6 +9,19 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(THIS_DIR, "downloads.sqlite3")
 _db_initialized = False
 
+_VALID_SORT_COLUMNS = {
+    "timestamp": "download_timestamp",
+    "chat": "COALESCE(chat_title, chat_id)",
+    "filename": "file_name",
+    "size": "file_size",
+    "media_type": "media_type",
+    "download_timestamp": "download_timestamp",
+    "chat_id": "chat_id",
+    "file_name": "file_name",
+    "size_mb": "file_size",
+    "chat_display": "COALESCE(chat_title, chat_id)",
+}
+
 
 def get_connection():
     """Get a connection to the SQLite database."""
@@ -50,9 +63,15 @@ def init_db():
                     "ALTER TABLE download_history ADD COLUMN chat_title TEXT"
                 )
 
-            # Create an index for faster queries on recent downloads
+            # Create indexes for faster queries
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_timestamp ON download_history(download_timestamp DESC)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_media_type ON download_history(media_type)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_chat_id ON download_history(chat_id)"
             )
             conn.commit()
         _db_initialized = True
@@ -204,21 +223,7 @@ def get_recent_downloads(
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            # Map valid sort columns to prevent SQL injection
-            valid_sort_cols = {
-                "timestamp": "download_timestamp",
-                "chat": "COALESCE(chat_title, chat_id)",
-                "filename": "file_name",
-                "size": "file_size",
-                "media_type": "media_type",
-                # Also fallbacks for safety:
-                "download_timestamp": "download_timestamp",
-                "chat_id": "chat_id",
-                "file_name": "file_name",
-                "size_mb": "file_size",
-                "chat_display": "COALESCE(chat_title, chat_id)",
-            }
-            order_col = valid_sort_cols.get(sort_by, "download_timestamp")
+            order_col = _VALID_SORT_COLUMNS.get(sort_by, "download_timestamp")
             order_dir = "DESC" if sort_desc else "ASC"
 
             query = """

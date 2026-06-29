@@ -16,10 +16,10 @@ dev_install: install
 	python3 -m pip install -r dev-requirements.txt
 
 static_type_check:
-	python3 -m mypy media_downloader.py utils --ignore-missing-imports
+	python3 -m mypy media_downloader.py utils config_manager.py db.py --ignore-missing-imports
 
 pylint:
-	python3 -m pylint media_downloader.py utils -r y
+	python3 -m pylint media_downloader.py utils config_manager.py db.py -r y
 
 style_check: static_type_check pylint
 
