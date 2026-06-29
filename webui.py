@@ -17,7 +17,7 @@ except ImportError:
     print("To use the graphical interface, please run:")
     print("  make install_webui")
     print("  or")
-    print("  pip install -r requirements-webui.txt\n")
+    print("  pip install -r requirements.txt\n")
     sys.exit(1)
 
 import media_downloader

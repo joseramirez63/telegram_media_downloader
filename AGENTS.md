@@ -569,8 +569,6 @@ Pattern that works every time:
 
 ## Dependencies
 
-- **Runtime**: `telethon`, `pyyaml`, `tqdm`, `rich`, `cryptg`.
-- **Web UI** (optional, Python >= 3.10): `nicegui` (installed via
-  `requirements-webui.txt` or `make install_webui`).
+- **Runtime**: `telethon`, `pyyaml`, `tqdm`, `rich`, `cryptg`, `nicegui`.
 - **Development**: `pytest`, `black`, `isort`, `mypy`, `pylint`,
   `pre-commit`. See `dev-requirements.txt` and `Makefile`.

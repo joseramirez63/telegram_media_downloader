@@ -18,8 +18,7 @@ the same file twice. **Python 3.8+** · CLI + Web UI.
 ```sh
 git clone https://github.com/xodaaaa/telegram_media_downloader.git
 cd telegram_media_downloader
-pip install -r requirements.txt          # CLI only
-pip install -r requirements-webui.txt    # + Web UI (Python 3.10+)
+pip install -r requirements.txt
 copy config.yaml.example config.yaml     # Windows
 cp config.yaml.example config.yaml       # Linux / macOS
 
@@ -57,7 +56,6 @@ If you already have a session, the wizard skips to only what's missing.
 git clone https://github.com/xodaaaa/telegram_media_downloader.git
 cd telegram_media_downloader
 pip install -r requirements.txt
-pip install -r requirements-webui.txt
 python webui.py
 ```
 
@@ -65,8 +63,7 @@ python webui.py
 ```sh
 git clone https://github.com/xodaaaa/telegram_media_downloader.git
 cd telegram_media_downloader
-make install          # CLI only
-make install_webui    # + Web UI
+make install
 python3 webui.py
 ```
 

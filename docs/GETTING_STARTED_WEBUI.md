@@ -23,7 +23,7 @@ To keep the core application lightweight, the Web UI components are an **optiona
 
    If you are on Windows (or don't have `make` installed):
    ```sh
-   pip3 install -r requirements-webui.txt
+    pip3 install -r requirements.txt
    ```
 
 ---

@@ -1,6 +1,6 @@
 TEST_ARTIFACTS ?= /tmp/coverage
 
-.PHONY: install dev_install install_webui static_type_check pylint style_check test show_version
+.PHONY: install dev_install static_type_check pylint style_check test show_version
 
 show_version:
 	@python3 -c "import sys; print('Python version:', f'{sys.version_info.major}.{sys.version_info.minor}')"
@@ -8,9 +8,6 @@ show_version:
 install:
 	python3 -m pip install --upgrade pip setuptools
 	python3 -m pip install -r requirements.txt
-
-install_webui: install
-	python3 -m pip install -r requirements-webui.txt
 
 dev_install: install
 	python3 -m pip install -r dev-requirements.txt
