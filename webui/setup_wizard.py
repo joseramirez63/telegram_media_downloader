@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from nicegui import ui
+from telethon.utils import get_display_name
 
 import media_downloader
 from utils.parsing import safe_int
@@ -515,13 +516,7 @@ def build_setup_wizard(  # NOSONAR
                     entity = await asyncio.wait_for(
                         wiz_client.get_entity(chat_id_val), timeout=8.0
                     )
-                    name = getattr(entity, "title", None) or getattr(
-                        entity, "first_name", None
-                    )
-                    if name:
-                        last = getattr(entity, "last_name", "")
-                        if last:
-                            name = f"{name} {last}".strip()
+                    name = get_display_name(entity) or None
                 except Exception:
                     logger.debug("Local entity name resolution failed, falling back")
                     name = None

@@ -13,6 +13,7 @@ from telethon import TelegramClient, events
 from telethon.errors import FileReferenceExpiredError, FloodWaitError
 from telethon.tl.types import (Document, Message, MessageMediaDocument,
                                MessageMediaPhoto, Photo)
+from telethon.utils import get_display_name
 from tqdm import tqdm
 
 import config_manager
@@ -773,11 +774,7 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
     if str(chat_id) not in CHAT_TITLES:
         try:
             entity = await client.get_entity(chat_id)
-            title = (
-                getattr(entity, "title", None)
-                or getattr(entity, "first_name", None)
-                or ""
-            )
+            title = get_display_name(entity)
             if title:
                 CHAT_TITLES[str(chat_id)] = title
         except Exception:
@@ -911,11 +908,7 @@ async def register_monitor_handler(  # NOSONAR
     if str(chat_id) not in CHAT_TITLES:
         try:
             entity = await client.get_entity(chat_id)
-            title = (
-                getattr(entity, "title", None)
-                or getattr(entity, "first_name", None)
-                or ""
-            )
+            title = get_display_name(entity)
             if title:
                 CHAT_TITLES[str(chat_id)] = title
         except Exception:
@@ -1067,11 +1060,7 @@ async def resolve_chat_entity(
             if not await client.is_user_authorized():
                 return None
             entity = await client.get_entity(chat_id)
-            name = getattr(entity, "title", None) or getattr(entity, "first_name", None)
-            if name:
-                last = getattr(entity, "last_name", "")
-                if last:
-                    name = f"{name} {last}".strip()
+            name = get_display_name(entity) or None
             return name
         except Exception:
             logger.exception("Failed to resolve chat entity %s", chat_id)
