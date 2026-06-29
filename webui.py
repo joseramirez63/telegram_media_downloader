@@ -76,6 +76,8 @@ def index():  # NOSONAR
     ui.add_head_html(PREMIUM_CSS)
     dark_mode = ui.dark_mode()
 
+    ui.on_exception(lambda e: ui.notify(str(e), type="negative", position="top"))
+
     # ── First-run / auth detection ──
     session_exists = os.path.exists(os.path.join(THIS_DIR, "media_downloader.session"))
 
@@ -305,22 +307,23 @@ def index():  # NOSONAR
                     build_history_tab(config, open_media, THIS_DIR)
 
                 with ui.tab_panel("terminal").style(_PADDING_0):
-                    with ui.column().style(
-                        "gap: 2px; margin-bottom: 28px; align-items: center;"
-                    ):
-                        ui.label("Terminal Output").classes("section-title")
-                        ui.label(
-                            "Real-time logs from downloads and monitor mode."
-                        ).classes("section-subtitle")
-                    log_area = (
-                        ui.log(max_lines=500)
-                        .classes("terminal-log")
-                        .style(
-                            "width: 100%; height: calc(100vh - 220px); padding: 16px;"
-                            " font-size: 13px; line-height: 1.7;"
+                    with ui.keep_alive():
+                        with ui.column().style(
+                            "gap: 2px; margin-bottom: 28px; align-items: center;"
+                        ):
+                            ui.label("Terminal Output").classes("section-title")
+                            ui.label(
+                                "Real-time logs from downloads and monitor mode."
+                            ).classes("section-subtitle")
+                        log_area = (
+                            ui.log(max_lines=500)
+                            .classes("terminal-log")
+                            .style(
+                                "width: 100%; height: calc(100vh - 220px); padding: 16px;"
+                                " font-size: 13px; line-height: 1.7;"
+                            )
                         )
-                    )
-                    log_area_holder["widget"] = log_area
+                        log_area_holder["widget"] = log_area
 
     # Build tour
     show_tour, check_first_visit = build_tour(current_page, tab_panels, nav_items)
