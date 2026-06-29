@@ -289,6 +289,7 @@ class TestMainMonitorMode(unittest.TestCase):
             p.stop()
 
     def test_mode_monitor(self):
+        """mode='monitor' is removed; falls back to 'history'."""
         mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
             {
                 "api_id": 1,
@@ -299,8 +300,8 @@ class TestMainMonitorMode(unittest.TestCase):
         )
         try:
             main()
-            mock_bm.assert_called_once()
-            mock_bi.assert_not_called()
+            mock_bi.assert_called_once()
+            mock_bm.assert_not_called()
             mock_upd.assert_called()
         finally:
             self._teardown_mocks(patches)
@@ -341,7 +342,8 @@ class TestMainMonitorMode(unittest.TestCase):
             self._teardown_mocks(patches)
 
     def test_mode_monitor_keyboard_interrupt(self):
-        _, mock_bm, mock_upd, mock_client, patches = self._setup_mocks(
+        """mode='monitor' is removed; falls back to 'history'."""
+        mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
             {
                 "api_id": 1,
                 "api_hash": "h",
@@ -349,10 +351,10 @@ class TestMainMonitorMode(unittest.TestCase):
                 "mode": "monitor",
             }
         )
-        mock_client.run_until_disconnected.side_effect = KeyboardInterrupt()
         try:
             main()
-            mock_bm.assert_called_once()
+            mock_bi.assert_called_once()
+            mock_bm.assert_not_called()
             mock_upd.assert_called()
         finally:
             self._teardown_mocks(patches)
@@ -390,9 +392,8 @@ class TestValidModes(unittest.TestCase):
 
     def test_valid_modes(self):
         self.assertIn("history", VALID_MODES)
-        self.assertIn("monitor", VALID_MODES)
         self.assertIn("history_monitor", VALID_MODES)
-        self.assertEqual(len(VALID_MODES), 3)
+        self.assertEqual(len(VALID_MODES), 2)
 
 
 if __name__ == "__main__":

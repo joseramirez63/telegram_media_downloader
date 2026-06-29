@@ -50,7 +50,7 @@ BACKLOG_DONE: dict = {}
 # Resolved chat titles for display in download history
 CHAT_TITLES: dict = {}
 
-VALID_MODES = ("history", "monitor", "history_monitor")
+VALID_MODES = ("history", "history_monitor")
 
 # Global hook for Web UI to receive progress updates
 UI_PROGRESS_HOOK = None
@@ -1265,15 +1265,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
     if mode not in VALID_MODES:
         logger.warning("Unknown mode %r in config; falling back to 'history'.", mode)
         mode = "history"
-
-    if mode == "monitor":
-        client = asyncio.get_event_loop().run_until_complete(begin_monitor(config))
-        try:
-            client.run_until_disconnected()
-        except KeyboardInterrupt:
-            logger.warning("KeyboardInterrupt received. Stopping monitor mode...")
-        update_config(config)
-        return
 
     if mode == "history_monitor":
         updated_config = config
