@@ -71,7 +71,6 @@ def build_execution_tab(  # NOSONAR
     total_gb_label = None
     download_client_ref = {"client": None}
     stop_download_fn = {"fn": None}
-    empty_state_ref = {}
 
     # Speed meter state (global)
     speed_byte_window = []
@@ -165,7 +164,7 @@ def build_execution_tab(  # NOSONAR
     with ui.element("div").classes("premium-card").style(
         "padding: 24px; margin-bottom: 16px;"
     ):
-        with ui.row().classes("items-center").style("gap: 10px; margin-bottom: 16px;"):
+        with ui.row().classes("items-center justify-center").style("gap: 10px; margin-bottom: 16px;"):
             ui.icon("downloading", size="sm", color="primary")
             ui.label("Active Downloads").style(
                 "font-size: 15px; font-weight: 600; color: var(--text-primary);"
@@ -174,19 +173,6 @@ def build_execution_tab(  # NOSONAR
         progress_container = ui.column().style(
             "width: 100%; gap: 8px; padding-right: 4px; min-height: 60px;"
         )
-        empty_state_ref["el"] = ui.label("No active downloads").style(
-            "padding: 16px 0; text-align: center;"
-            " color: var(--text-tertiary); font-size: 13px;"
-            " width: 100%;"
-        )
-
-    def _update_empty_state():
-        if "el" in empty_state_ref:
-            has_visible = any(entry.visible for entry in active_downloads.values())
-            if has_visible:
-                empty_state_ref["el"].style(_DISPLAY_NONE)
-            else:
-                empty_state_ref["el"].style("")
 
     # Buttons — single row
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
@@ -283,7 +269,6 @@ def build_execution_tab(  # NOSONAR
                     completed=False,
                 )
                 download_order.append(desc)
-                _update_empty_state()
                 # Max 4 visible: hide oldest completed first
                 visible_count = sum(
                     1
@@ -402,7 +387,6 @@ def build_execution_tab(  # NOSONAR
             download_order.clear()
             speed_byte_window.clear()
             last_known_bytes.clear()
-            _update_empty_state()
             update_status("Running", "status-running")
             start_btn.set_text("Downloading...")
             start_btn.props('color="grey"')
@@ -467,7 +451,6 @@ def build_execution_tab(  # NOSONAR
                 start_btn.props('color="primary"')
                 start_btn.enable()
                 download_client_ref["client"] = None
-                _update_empty_state()
                 is_running["value"] = False
             fresh = load_config_fn()
             media_downloader.update_config(fresh)
