@@ -9,7 +9,7 @@
 
 Download all media files (audio, document, photo, video, voice, video_note)
 from Telegram chats and channels. Tracks progress so you never re-download
-the same file twice. **Python 3.8+** · CLI + Web UI.
+the same file twice. **Python 3.12+** · CLI + Web UI.
 
 ---
 

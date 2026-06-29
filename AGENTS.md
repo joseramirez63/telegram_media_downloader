@@ -3,9 +3,15 @@
 Last updated: **2026-06-28**
 - Removed proxy support (simplified `build_telegram_client` helper)
 - Removed Debug tab and `utils/obfuscate.py` (unused functionality)
+- Removed built-in update checker (`utils/updates.py`)
 - Added `utils/telegram_client.py` with `build_telegram_client()` factory
-- Added `_get_chats_to_process()` helper to centralize chat extraction
-- Cleaned up `_ErrorCaptureHandler`, `_ERROR_LOG` from `media_downloader.py`
+- Added `utils/parsing.py::safe_int()` and `utils/file_management.py::to_media_url()`
+- Added `_get_chats_to_process()`, `_resolve_date_filters()`, `reset_runtime_state()` helpers
+- Added `ActiveDownloadEntry` dataclass in execution_tab
+- Upgraded all dependencies (nicegui 3.13, telethon 1.44, rich 15.0, tqdm 4.68.3, cryptg 0.5.2)
+- Python 3.12 minimum, requirements unified into single `requirements.txt`
+- Account badge temporarily removed from sidebar
+- Suppressed `telethon.sessions` warnings, demoted `check_account_premium` log
 
 This file provides architectural context, coding guidelines, and project
 conventions for AI coding agents (Gemini, Copilot, Cursor, etc.) working on
@@ -569,6 +575,9 @@ Pattern that works every time:
 
 ## Dependencies
 
-- **Runtime**: `telethon`, `pyyaml`, `tqdm`, `rich`, `cryptg`, `nicegui`.
+- **Runtime** (single `requirements.txt`): `telethon>=1.44`, `nicegui>=3.13`, `PyYAML>=6.0.3`,
+  `rich>=15.0`, `tqdm>=4.68.3`, `cryptg>=0.5.2`.
 - **Development**: `pytest`, `black`, `isort`, `mypy`, `pylint`,
   `pre-commit`. See `dev-requirements.txt` and `Makefile`.
+- **Python**: 3.12 minimum. All CI matrices use Python 3.12.
+- **Account badge**: temporarily removed from sidebar (caused session lock issues with `check_account_premium`).
