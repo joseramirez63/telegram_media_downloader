@@ -975,11 +975,12 @@ async def begin_monitor(config: dict) -> TelegramClient:
     TelegramClient
         Connected Telethon client with listeners registered.
     """
-    client = build_telegram_client(
-        api_id=config["api_id"],
-        api_hash=config["api_hash"],
-    )
-    await client.start()
+    async with _VERIFY_LOCK:
+        client = build_telegram_client(
+            api_id=config["api_id"],
+            api_hash=config["api_hash"],
+        )
+        await client.start()
 
     try:
         chats_config = _get_chats_to_process(config)
@@ -1225,11 +1226,12 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
     dict
         Updated configuration to be written into config file.
     """
-    client = build_telegram_client(
-        api_id=config["api_id"],
-        api_hash=config["api_hash"],
-    )
-    await client.start()
+    async with _VERIFY_LOCK:
+        client = build_telegram_client(
+            api_id=config["api_id"],
+            api_hash=config["api_hash"],
+        )
+        await client.start()
     if client_ref is not None:
         client_ref["client"] = client
 
@@ -1253,7 +1255,8 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
                 client, config, chat_conf, pagination_limit, config_write_lock
             )
 
-    await client.disconnect()
+    async with _VERIFY_LOCK:
+        await client.disconnect()
     return config
 
 
