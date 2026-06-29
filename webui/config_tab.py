@@ -647,7 +647,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
         add_dialog = ui.dialog()
         with add_dialog, ui.card().style(
             "width: 480px; max-width: 90vw; border-radius: var(--radius-xl);"
-            " border: 1px solid var(--border); overflow: hidden;"
+            " overflow: hidden; background: var(--surface);"
+            " margin: auto; border: 1px solid var(--border);"
         ):
             with ui.row().classes("items-center justify-between").style(
                 "padding: 20px 24px 0 24px;"
@@ -660,7 +661,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     icon="close", on_click=add_dialog.close
                 ).props("flat dense round color=grey-6")
 
-            with ui.column().style("padding: 16px 24px; gap: 12px;"):
+            with ui.column().style("padding: 20px 24px; gap: 14px;"):
                 chat_in = ui.input("Chat ID / @username").props("outlined dense").classes("w-full")
                 verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
 
