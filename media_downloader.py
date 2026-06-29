@@ -1013,24 +1013,32 @@ async def check_account_premium(config: dict):
         Returns ``None`` if unable to connect.
     """
     try:
-        client = build_telegram_client(
-            api_id=config["api_id"],
-            api_hash=config["api_hash"],
-        )
-        await client.start()
-        me = await client.get_me()
-        await client.disconnect()
-        if me is None:
+        api_id = config.get("api_id", "")
+        if isinstance(api_id, str) and not api_id.strip().isdigit():
             return None
-        return {
-            "premium": getattr(me, "premium", False),
-            "first_name": getattr(me, "first_name", "") or "",
-            "last_name": getattr(me, "last_name", "") or "",
-            "username": getattr(me, "username", "") or "",
-        }
-    except Exception:
-        logger.exception("check_account_premium failed")
+    except (TypeError, ValueError):
         return None
+
+    async with _VERIFY_LOCK:
+        try:
+            client = build_telegram_client(
+                api_id=config["api_id"],
+                api_hash=config["api_hash"],
+            )
+            await client.start()
+            me = await client.get_me()
+            await client.disconnect()
+            if me is None:
+                return None
+            return {
+                "premium": getattr(me, "premium", False),
+                "first_name": getattr(me, "first_name", "") or "",
+                "last_name": getattr(me, "last_name", "") or "",
+                "username": getattr(me, "username", "") or "",
+            }
+        except Exception:
+            logger.exception("check_account_premium failed")
+            return None
 
 
 async def resolve_chat_entity(
