@@ -662,43 +662,51 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 ).props("flat dense round color=grey-6")
 
             with ui.column().style("padding: 20px 24px; gap: 14px;"):
-                chat_in = ui.input("Chat ID / @username").props("outlined dense").classes("w-full")
+                with ui.row().style("gap: 8px; align-items: flex-end;"):
+                    chat_in = (
+                        ui.input(
+                            "Chat ID / @username",
+                            placeholder="123456789 or @channelname",
+                        )
+                        .classes("col")
+                        .props("outlined dense")
+                    )
+                    ui.button(
+                        "Verify", on_click=lambda: _verify()
+                    ).props("outline dense color=info").style("font-size: 13px;")
                 verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
 
-                with ui.row().style("gap: 8px; align-items: flex-end;"):
-                    async def _verify():
-                        chat_val = str(chat_in.value or "").strip()
-                        if not chat_val:
-                            verify_label.set_text("Enter a chat ID or @username first.")
-                            verify_label.style("color: var(--text-tertiary);")
-                            return
-                        verify_label.set_text("Verifying...")
-                        verify_label.style("color: var(--text-secondary);")
-                        try:
-                            chat_id_val = int(chat_val)
-                        except ValueError:
-                            chat_id_val = chat_val
-                        try:
-                            name = await asyncio.wait_for(
-                                media_downloader.resolve_chat_entity(
-                                    config.get("api_id", 0),
-                                    config.get("api_hash", ""),
-                                    chat_id_val,
-                                ),
-                                timeout=10.0,
-                            )
-                        except (asyncio.TimeoutError, Exception):
-                            name = None
-                        if name:
-                            chat_in.set_value(name)
-                            chat_in.props('outlined dense color="positive"')
-                            verify_label.set_text("Chat detected")
-                            verify_label.style("color: var(--positive);")
-                        else:
-                            verify_label.set_text("Could not resolve. Check the ID/username.")
-                            verify_label.style("color: var(--negative);")
-
-                    ui.button("Verify", on_click=_verify).props("outline dense color=info").style("font-size: 13px;")
+                async def _verify():
+                    chat_val = str(chat_in.value or "").strip()
+                    if not chat_val:
+                        verify_label.set_text("Enter a chat ID or @username first.")
+                        verify_label.style("color: var(--text-tertiary);")
+                        return
+                    verify_label.set_text("Verifying...")
+                    verify_label.style("color: var(--text-secondary);")
+                    try:
+                        chat_id_val = int(chat_val)
+                    except ValueError:
+                        chat_id_val = chat_val
+                    try:
+                        name = await asyncio.wait_for(
+                            media_downloader.resolve_chat_entity(
+                                config.get("api_id", 0),
+                                config.get("api_hash", ""),
+                                chat_id_val,
+                            ),
+                            timeout=10.0,
+                        )
+                    except (asyncio.TimeoutError, Exception):
+                        name = None
+                    if name:
+                        chat_in.set_value(name)
+                        chat_in.props('outlined dense color="positive"')
+                        verify_label.set_text("Chat detected")
+                        verify_label.style("color: var(--positive);")
+                    else:
+                        verify_label.set_text("Could not resolve. Check the ID/username.")
+                        verify_label.style("color: var(--negative);")
 
                 browse_state = {"open": False, "dialogs": [], "page": 0, "loaded": False}
                 browse_container = ui.column().style(
