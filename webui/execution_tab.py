@@ -172,7 +172,7 @@ def build_execution_tab(  # NOSONAR
             )
 
         progress_container = ui.column().style(
-            "width: 100%; gap: 8px; padding-right: 4px;"
+            "width: 100%; gap: 8px; padding-right: 4px; min-height: 60px;"
         )
         empty_state_ref["el"] = ui.label("No active downloads").style(
             "padding: 16px 0; text-align: center;"
@@ -480,10 +480,8 @@ def build_execution_tab(  # NOSONAR
             except Exception:
                 pass
             download_client_ref["client"] = None
+            ui.notify("Download stopped. Progress saved.", type="info")
         start_btn.set_text("Start Download")
-        start_btn.props('color="primary"')
-        start_btn.enable()
-        ui.notify("Download stopped. Progress saved.", type="info")
 
     stop_download_fn["fn"] = stop_download
 
