@@ -342,11 +342,15 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 .classes("col")
                 .props("outlined dense use-chips")
             )
+            _existing_chats = (
+                config.get("chats", [])
+                or ([config] if "chat_id" in config else [])
+            )
             global_inputs["parallel_chats"] = ui.checkbox(
                 "Parallel Chats",
                 value=config.get("parallel_chats", False),
-                on_change=lambda e: _par_warn.style(
-                    "" if e.value and len(chat_inputs) > 3 else "display: none;"
+                on_change=lambda e, ex=_existing_chats: _par_warn.style(
+                    "" if e.value and len(ex) > 3 else "display: none;"
                 ),
             ).style("color: var(--text-secondary);")
             _par_warn = ui.label(
@@ -354,6 +358,8 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             ).style(
                 "display: none; font-size: 11px; color: var(--warning); margin-top: 4px;"
             )
+            if config.get("parallel_chats", False) and len(_existing_chats) > 3:
+                _par_warn.style("")
 
         with ui.expansion("File Formats (Comma-separated)", icon="folder_zip").props(
             "dense"
