@@ -52,6 +52,7 @@ def _apply_runtime_patches():
 
     # Suppress Telethon connection cleanup noise on Python 3.13
     logging.getLogger("telethon").setLevel(logging.WARNING)
+    logging.getLogger("telethon.sessions").setLevel(logging.ERROR)
     logging.getLogger("asyncio").setLevel(logging.CRITICAL)
     # Suppress auto-reload noise ("X changes detected")
     logging.getLogger("watchfiles").setLevel(logging.WARNING)
