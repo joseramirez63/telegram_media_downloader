@@ -398,7 +398,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         _CARD_SUBTITLE_FONT
                     )
 
-        chats_container = ui.column().style("width: 100%; gap: 12px;")
+        chats_container = ui.row().style("width: 100%; gap: 12px; flex-wrap: wrap;")
 
         def add_chat_ui(chat_data=None):
             if chat_data is None:
@@ -408,7 +408,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     "ids_to_retry": [],
                 }
             with chats_container:
-                with ui.element("div").classes("chat-card") as chat_card:
+                with ui.element("div").classes("chat-card").style("width: calc(50% - 6px);") as chat_card:
                     c_inputs = {
                         "card": chat_card,
                         "ids_to_retry": chat_data.get("ids_to_retry", []),
