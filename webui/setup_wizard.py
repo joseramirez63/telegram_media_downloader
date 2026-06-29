@@ -592,6 +592,13 @@ def build_setup_wizard(  # NOSONAR
             config["phone"] = wizard_state["phone"]
         config["_wizard_completed"] = True
         save_config_fn(config)
+        # Disconnect wizard client to release session for monitor/download
+        wiz_client = wizard_state.get("client")
+        if wiz_client is not None:
+            try:
+                asyncio.ensure_future(wiz_client.disconnect())
+            except Exception:
+                pass
         wizard_dialog.close()
         on_complete_fn()
 
