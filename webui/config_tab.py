@@ -349,17 +349,18 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             global_inputs["parallel_chats"] = ui.checkbox(
                 "Parallel Chats",
                 value=config.get("parallel_chats", False),
-                on_change=lambda e, ex=_existing_chats: _par_warn.style(
-                    "" if e.value and len(ex) > 3 else "display: none;"
+                on_change=lambda e, ex=_existing_chats: _par_warn.set_visibility(
+                    e.value and len(ex) > 3
                 ),
             ).style("color: var(--text-secondary);")
             _par_warn = ui.label(
                 "Not recommended with 4+ chats. May cause Telegram flood limits."
             ).style(
-                "display: none; font-size: 11px; color: var(--warning); margin-top: 4px;"
+                "font-size: 11px; color: var(--warning); margin-top: 4px;"
             )
+            _par_warn.set_visibility(False)
             if config.get("parallel_chats", False) and len(_existing_chats) > 3:
-                _par_warn.style("")
+                _par_warn.set_visibility(True)
 
         with ui.expansion("File Formats (Comma-separated)", icon="folder_zip").props(
             "dense"
