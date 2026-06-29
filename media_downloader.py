@@ -20,6 +20,7 @@ import db
 from utils.file_management import get_next_name, manage_duplicate_file
 from utils.log import LogFilter
 from utils.meta import print_meta
+from utils.parsing import safe_int
 from utils.telegram_client import build_telegram_client
 from utils.updates import check_for_updates
 
@@ -136,7 +137,7 @@ def update_config(config: dict):
     logger.info("Updated last read message_id to config file")
 
 
-def _can_download(_type: str, file_formats: dict, file_format: Optional[str]) -> bool:
+def _can_download(_type: str, file_formats: dict, file_format: str | None) -> bool:
     """
     Check if the given file format can be downloaded.
 
@@ -202,6 +203,33 @@ def _cleanup_partial(file_path: str) -> None:
                 pass
 
 
+def _resolve_download_directory(chat_conf: dict, global_config: dict) -> str | None:
+    """Resolve download directory with chat->global fallback.
+
+    Parameters
+    ----------
+    chat_conf: dict
+        Per-chat configuration dictionary.
+    global_config: dict
+        Global configuration dictionary.
+
+    Returns
+    -------
+    Optional[str]
+        Absolute path to the download directory, or ``None``.
+    """
+    val = chat_conf.get(
+        "download_directory", global_config.get("download_directory")
+    )
+    if isinstance(val, str) and val.strip():
+        directory = val.strip()
+        if not os.path.isabs(directory):
+            directory = os.path.abspath(directory)
+        os.makedirs(directory, exist_ok=True)
+        return directory
+    return None
+
+
 def _resolve_monitor_settings(global_config: dict, chat_conf: dict) -> dict:
     """Resolve media_types, file_formats, max_concurrent_downloads and
     download_directory with fallback chat -> global.
@@ -225,27 +253,14 @@ def _resolve_monitor_settings(global_config: dict, chat_conf: dict) -> dict:
         "max_concurrent_downloads",
         global_config.get("max_concurrent_downloads", 1),
     )
-    try:
-        max_concurrent_downloads = int(raw_concurrent)
-        if max_concurrent_downloads <= 0:
-            raise ValueError
-    except (TypeError, ValueError):
+    max_concurrent_downloads = safe_int(raw_concurrent, default=1, min_value=1)
+    if max_concurrent_downloads == 1 and raw_concurrent not in (1, None):
         logger.warning(
             "Invalid max_concurrent_downloads %r; defaulting to 1.",
             raw_concurrent,
         )
-        max_concurrent_downloads = 1
 
-    download_directory_val = chat_conf.get(
-        "download_directory", global_config.get("download_directory")
-    )
-    if isinstance(download_directory_val, str) and download_directory_val.strip():
-        download_directory = download_directory_val.strip()
-        if not os.path.isabs(download_directory):
-            download_directory = os.path.abspath(download_directory)
-        os.makedirs(download_directory, exist_ok=True)
-    else:
-        download_directory = None
+    download_directory = _resolve_download_directory(chat_conf, global_config)
 
     return {
         "media_types": media_types,
@@ -289,11 +304,11 @@ def _progress_callback(current: int, total: int, pbar: tqdm) -> None:
 
 
 async def _get_media_meta(  # NOSONAR
-    media_obj: Union[Document, Photo],
+    media_obj: Document | Photo,
     _type: str,
-    chat_id: Union[int, str],
-    download_directory: Optional[str] = None,
-) -> Tuple[str, Optional[str]]:
+    chat_id: int | str,
+    download_directory: str | None = None,
+) -> tuple[str, str | None]:
     """Extract file name and file id from media object.
 
     Parameters
@@ -312,7 +327,7 @@ async def _get_media_meta(  # NOSONAR
     Tuple[str, Optional[str]]
         file_name, file_format
     """
-    file_format: Optional[str] = None
+    file_format: str | None = None
     if hasattr(media_obj, "mime_type") and media_obj.mime_type:
         file_format = media_obj.mime_type.split("/")[-1]
     elif _type == "photo":
@@ -342,7 +357,7 @@ async def _get_media_meta(  # NOSONAR
     return file_name, file_format
 
 
-def get_media_type(message: Message) -> Optional[str]:  # NOSONAR
+def get_media_type(message: Message) -> str | None:  # NOSONAR
     """
     Determine the media type from the message's media attributes.
 
@@ -376,10 +391,10 @@ def get_media_type(message: Message) -> Optional[str]:  # NOSONAR
 async def download_media(  # pylint: disable=too-many-locals,too-many-branches,too-many-positional-arguments,too-many-statements  # NOSONAR
     client: TelegramClient,
     message: Message,
-    media_types: List[str],
+    media_types: list[str],
     file_formats: dict,
-    chat_id: Union[int, str],
-    download_directory: Optional[str] = None,
+    chat_id: int | str,
+    download_directory: str | None = None,
 ):
     """
     Download media from Telegram.
@@ -556,7 +571,7 @@ async def download_media(  # pylint: disable=too-many-locals,too-many-branches,t
     return message.id
 
 
-def _resolve_download_delay(download_delay) -> Optional[float]:
+def _resolve_download_delay(download_delay) -> float | None:
     """Parse and compute the download delay value.
 
     Parameters
@@ -601,13 +616,13 @@ def _resolve_download_delay(download_delay) -> Optional[float]:
 
 async def process_messages(  # pylint: disable=too-many-positional-arguments
     client: TelegramClient,
-    messages: List[Message],
-    media_types: List[str],
+    messages: list[Message],
+    media_types: list[str],
     file_formats: dict,
-    chat_id: Union[int, str],
-    download_directory: Optional[str] = None,
+    chat_id: int | str,
+    download_directory: str | None = None,
     max_concurrent_downloads: int = 1,
-    download_delay: Optional[Union[float, List[float]]] = None,
+    download_delay: float | list[float] | None = None,
 ) -> int:
     """
     Download media from Telegram.
@@ -674,7 +689,7 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
 
 def _resolve_date_filters(
     chat_conf: dict, global_config: dict
-) -> Tuple[Optional[datetime], Optional[datetime], Optional[int]]:
+) -> tuple[datetime | None, datetime | None, int | None]:
     """Resolve date and message filters from chat and global config.
 
     Parameters
@@ -722,7 +737,7 @@ def _resolve_date_filters(
         "max_messages", global_config.get("max_messages")
     )
     if isinstance(max_messages_val, int):
-        max_messages: Optional[int] = max_messages_val
+        max_messages: int | None = max_messages_val
     elif isinstance(max_messages_val, str) and max_messages_val.strip():
         max_messages = int(max_messages_val)
     else:
@@ -767,12 +782,13 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
             if title:
                 CHAT_TITLES[str(chat_id)] = title
         except Exception:
+            logger.warning("Failed to resolve chat title for %s", chat_id, exc_info=True)
             CHAT_TITLES[str(chat_id)] = ""
 
     CURRENT_BATCH_IDS[chat_id] = []
 
     # Merge chat-specific config with global fallback
-    media_types: List[str] = chat_conf.get(
+    media_types: list[str] = chat_conf.get(
         "media_types", global_config.get("media_types", [])
     )
     file_formats: dict = chat_conf.get(
@@ -784,32 +800,19 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
     _max_concurrent_raw = chat_conf.get(
         "max_concurrent_downloads", global_config.get("max_concurrent_downloads", 4)
     )
-    try:
-        max_concurrent_downloads = int(_max_concurrent_raw)  # type: ignore[arg-type]
-        if max_concurrent_downloads <= 0:
-            raise ValueError("must be a positive integer")
-    except (TypeError, ValueError):
+    max_concurrent_downloads = safe_int(_max_concurrent_raw, default=1, min_value=1)
+    if max_concurrent_downloads == 1 and _max_concurrent_raw not in (1, None):
         logger.warning(
             "Invalid max_concurrent_downloads value %r; defaulting to 4.",
             _max_concurrent_raw,
         )
-        max_concurrent_downloads = 1
     download_delay = chat_conf.get(
         "download_delay", global_config.get("download_delay", 20)
     )
 
     start_date, end_date, max_messages = _resolve_date_filters(chat_conf, global_config)
 
-    download_directory_val = chat_conf.get(
-        "download_directory", global_config.get("download_directory")
-    )
-    if isinstance(download_directory_val, str) and download_directory_val.strip():
-        download_directory = download_directory_val.strip()
-        if not os.path.isabs(download_directory):
-            download_directory = os.path.abspath(download_directory)
-        os.makedirs(download_directory, exist_ok=True)
-    else:
-        download_directory = None
+    download_directory = _resolve_download_directory(chat_conf, global_config)
 
     messages_iter = client.iter_messages(
         chat_id, min_id=last_read_message_id, reverse=True
@@ -917,6 +920,7 @@ async def register_monitor_handler(  # NOSONAR
             if title:
                 CHAT_TITLES[str(chat_id)] = title
         except Exception:
+            logger.warning("Failed to resolve chat title for %s", chat_id, exc_info=True)
             CHAT_TITLES[str(chat_id)] = ""
 
     semaphore = asyncio.Semaphore(max(1, settings["max_concurrent_downloads"]))
@@ -1033,12 +1037,13 @@ async def check_account_premium(config: dict):
             "username": getattr(me, "username", "") or "",
         }
     except Exception:
+        logger.exception("check_account_premium failed")
         return None
 
 
 async def resolve_chat_entity(
-    api_id: int, api_hash: str, chat_id: Union[int, str]
-) -> Optional[str]:
+    api_id: int, api_hash: str, chat_id: int | str
+) -> str | None:
     """Resolve a chat ID or username to its display name.
 
     Parameters
@@ -1070,6 +1075,7 @@ async def resolve_chat_entity(
                     name = f"{name} {last}".strip()
             return name
         except Exception:
+            logger.exception("Failed to resolve chat entity %s", chat_id)
             return None
         finally:
             if client is not None:
@@ -1082,8 +1088,8 @@ async def resolve_chat_entity(
 async def get_user_dialogs(
     api_id: int,
     api_hash: str,
-    client: Optional[TelegramClient] = None,
-) -> List[dict]:
+    client: TelegramClient | None = None,
+) -> list[dict]:
     """Retrieve the user's dialogs (chats, channels, groups, bots).
 
     Parameters
@@ -1132,7 +1138,8 @@ async def get_user_dialogs(
                 dialogs.append({"id": dial_id, "name": name, "type": etype})
             dialogs.sort(key=lambda d: (d["type"] != "channel", d["name"].lower()))
         except Exception:
-            pass
+            logger.exception("Failed to fetch user dialogs")
+            dialogs = []
         finally:
             if own_client is not None:
                 try:
@@ -1166,6 +1173,7 @@ async def send_auth_code(api_id: int, api_hash: str, phone: str) -> dict:
         result = await client.send_code_request(phone)
         return {"phone_code_hash": result.phone_code_hash, "client": client}
     except Exception as e:
+        logger.exception("send_auth_code failed for phone %s", phone)
         return {"error": str(e)}
 
 
@@ -1192,6 +1200,7 @@ async def verify_auth_code(client, phone: str, code: str, phone_code_hash: str) 
         await client.sign_in(phone, code, phone_code_hash=phone_code_hash)
         return True
     except Exception:
+        logger.warning("verify_auth_code sign-in failed for %s", phone, exc_info=True)
         try:
             await client.disconnect()
         except Exception:
@@ -1200,7 +1209,7 @@ async def verify_auth_code(client, phone: str, code: str, phone_code_hash: str) 
 
 
 async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    config: dict, pagination_limit: int, client_ref: Optional[dict] = None
+    config: dict, pagination_limit: int, client_ref: dict | None = None
 ) -> dict:
     """
     Create telethon client and initiate download.

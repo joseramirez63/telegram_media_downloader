@@ -10,7 +10,7 @@ To keep the core application lightweight, the Web UI components are an **optiona
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/Dineshkarthik/telegram_media_downloader.git
+    git clone https://github.com/xodaaaa/telegram_media_downloader.git
    cd telegram_media_downloader
    ```
 

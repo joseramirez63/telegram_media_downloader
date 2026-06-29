@@ -1,10 +1,14 @@
 """Setup wizard modal for first-run authentication."""
 
 import asyncio
+import logging
 
 from nicegui import ui
 
 import media_downloader
+from utils.parsing import safe_int
+
+logger = logging.getLogger("wizard")
 
 # Style constants
 _PROPS_DENSE = "outlined dense"
@@ -43,15 +47,9 @@ def build_setup_wizard(  # NOSONAR
         1 = full wizard, 2 = phone only, 3 = chat only.
     """
 
-    def _safe_int(v):
-        try:
-            return int(v)
-        except (TypeError, ValueError):
-            return 0
-
     wizard_state = {
         "step": start_step,
-        "api_id": _safe_int(config.get("api_id")),
+        "api_id": safe_int(config.get("api_id"), default=0),
         "api_hash": (
             config.get("api_hash", "")
             if isinstance(config.get("api_hash"), str)
@@ -525,6 +523,7 @@ def build_setup_wizard(  # NOSONAR
                         if last:
                             name = f"{name} {last}".strip()
                 except Exception:
+                    logger.debug("Local entity name resolution failed, falling back")
                     name = None
             if not name:
                 try:
@@ -537,6 +536,7 @@ def build_setup_wizard(  # NOSONAR
                         timeout=8.0,
                     )
                 except Exception:
+                    logger.warning("resolve_chat_entity timeout/error for %s", chat_id_val)
                     name = None
             if name:
                 wizard_state["chat_id"] = str(chat_val)

@@ -72,9 +72,9 @@ def record_download(
     message_id: int,
     file_name: str,
     file_size: int,
-    file_path: Optional[str] = None,
-    media_type: Optional[str] = None,
-    chat_title: Optional[str] = None,
+    file_path: str | None = None,
+    media_type: str | None = None,
+    chat_title: str | None = None,
 ):
     """Record a successful download in the history table."""
     _ensure_db()

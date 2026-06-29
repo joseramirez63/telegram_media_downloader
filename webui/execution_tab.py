@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import logging
 import os
 import time
-import urllib.parse
+from utils.file_management import to_media_url
 from typing import Any, Optional
 
 from nicegui import ui
@@ -399,21 +399,9 @@ def build_execution_tab(  # NOSONAR
                 if file_path and not getattr(row, "has_open_btn", False):
                     row.has_open_btn = True
                     global_download_dir = config.get("download_directory", "")
-                    file_url = ""
-                    try:
-                        abs_fpath = os.path.abspath(file_path)
-                        abs_base = (
-                            os.path.abspath(global_download_dir)
-                            if global_download_dir
-                            else this_dir
-                        )
-                        if abs_fpath.startswith(abs_base):
-                            rel_path = os.path.relpath(abs_fpath, abs_base)
-                            rel_path = rel_path.replace("\\", "/")
-                            encoded_path = urllib.parse.quote(rel_path, safe="/")
-                            file_url = f"/media/{encoded_path}"
-                    except Exception:
-                        pass
+                    file_url = to_media_url(
+                        file_path, global_download_dir, this_dir
+                    )
                     if file_url:
                         with action_col:
                             fname = os.path.basename(file_path)

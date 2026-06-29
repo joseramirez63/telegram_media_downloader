@@ -3,6 +3,7 @@
 import glob
 import os
 import pathlib
+import urllib.parse
 from hashlib import sha256
 
 
@@ -85,3 +86,32 @@ def manage_duplicate_file(file_path: str):
             os.remove(file_path)
             return old_file_path
     return file_path
+
+
+def to_media_url(file_path: str, base_dir: str, this_dir: str) -> str:
+    """Convert an absolute file path to a ``/media/...`` URL.
+
+    Parameters
+    ----------
+    file_path: str
+        Absolute path to a downloaded media file.
+    base_dir: str
+        Configured download directory (may be empty). Falls back to
+        ``this_dir``.
+    this_dir: str
+        Project root directory (fallback base).
+
+    Returns
+    -------
+    str
+        A relative ``/media/...`` URL if the file is under the base
+        directory, or an empty string otherwise.
+    """
+    abs_fpath = os.path.abspath(file_path)
+    abs_base = os.path.abspath(base_dir) if base_dir else this_dir
+    if abs_fpath.startswith(abs_base):
+        rel_path = os.path.relpath(abs_fpath, abs_base)
+        rel_path = rel_path.replace("\\", "/")
+        encoded_path = urllib.parse.quote(rel_path, safe="/")
+        return f"/media/{encoded_path}"
+    return ""

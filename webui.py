@@ -33,33 +33,40 @@ logger = logging.getLogger("webui")
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PADDING_0 = "padding: 0;"
 
-# Enable WAL mode on Telethon session file to reduce lock contention
-# when verify buttons or other auxiliary clients access it concurrently
-_session_path = os.path.join(THIS_DIR, "media_downloader.session")
-if os.path.exists(_session_path):
-    try:
-        _sconn = sqlite3.connect(_session_path, timeout=5)
-        _sconn.execute("PRAGMA journal_mode=WAL")
-        _sconn.close()
-    except Exception:
-        pass
 
-# Suppress Telethon connection cleanup noise on Python 3.13
-logging.getLogger("telethon").setLevel(logging.WARNING)
-logging.getLogger("asyncio").setLevel(logging.CRITICAL)
-# Suppress auto-reload noise ("X changes detected")
-logging.getLogger("watchfiles").setLevel(logging.WARNING)
-logging.getLogger("nicegui").setLevel(logging.WARNING)
-import warnings
+def _apply_runtime_patches():
+    """Apply runtime patches (WAL mode, logging, unraisablehook).
 
-warnings.filterwarnings("ignore", message=".*coroutine ignored GeneratorExit.*")
-if hasattr(sys, "unraisablehook"):
-    _original_hook = sys.unraisablehook
-    sys.unraisablehook = lambda args: (
-        None
-        if "GeneratorExit" in str(getattr(args, "exc_value", ""))
-        else _original_hook(args)
-    )
+    These are side effects that should run at application startup
+    but NOT on a bare ``import webui``.
+    """
+    # Enable WAL mode on Telethon session file to reduce lock contention
+    _session_path = os.path.join(THIS_DIR, "media_downloader.session")
+    if os.path.exists(_session_path):
+        try:
+            _sconn = sqlite3.connect(_session_path, timeout=5)
+            _sconn.execute("PRAGMA journal_mode=WAL")
+            _sconn.close()
+        except Exception:
+            pass
+
+    # Suppress Telethon connection cleanup noise on Python 3.13
+    logging.getLogger("telethon").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+    # Suppress auto-reload noise ("X changes detected")
+    logging.getLogger("watchfiles").setLevel(logging.WARNING)
+    logging.getLogger("nicegui").setLevel(logging.WARNING)
+
+    import warnings
+
+    warnings.filterwarnings("ignore", message=".*coroutine ignored GeneratorExit.*")
+    if hasattr(sys, "unraisablehook"):
+        _original_hook = sys.unraisablehook
+        sys.unraisablehook = lambda args: (
+            None
+            if "GeneratorExit" in str(getattr(args, "exc_value", ""))
+            else _original_hook(args)
+        )
 
 
 @ui.page("/")
@@ -329,4 +336,5 @@ def index():  # NOSONAR
 
 
 if __name__ in {"__main__", "__mp_main__"}:
+    _apply_runtime_patches()
     ui.run(title="Telegram Media Downloader", port=8080, dark=False, show=False)

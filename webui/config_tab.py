@@ -7,6 +7,59 @@ import string
 from nicegui import ui
 
 import media_downloader
+from utils.parsing import safe_int
+
+
+def _parse_delay_string(value):
+    """Parse a delay string to int or [int, int] or None.
+
+    Parameters
+    ----------
+    value: str or None
+        Raw string from the input field (e.g. ``"20"`` or ``"15,30"``).
+
+    Returns
+    -------
+    int or list[int] or None
+        Parsed value, or ``None`` if unparseable.
+    """
+    s = (str(value) if value else "").strip()
+    if not s:
+        return None
+    if "," in s:
+        parts = [int(x.strip()) for x in s.split(",") if x.strip().isdigit()]
+        if len(parts) == 2:
+            return parts
+        return None
+    if s.isdigit():
+        return int(s)
+    return None
+
+_FILE_FORMAT_KEYS = ("audio", "video", "photo", "document")
+
+
+def _parse_formats(inputs, prefix=""):
+    """Build a file_formats dict from input fields.
+
+    Parameters
+    ----------
+    inputs: dict
+        Dict of input widgets keyed by ``format_audio``, etc.
+    prefix: str
+        Joined value separator (already applied to the raw input value).
+
+    Returns
+    -------
+    dict
+        ``{"audio": [...], "video": [...], ...}``.
+    """
+    result = {}
+    for key in _FILE_FORMAT_KEYS:
+        val = inputs[f"{prefix}format_{key}"]
+        raw = (str(val.value) if val.value else "").strip()
+        if raw:
+            result[key] = [x.strip() for x in raw.split(",") if x.strip()]
+    return result
 
 _OUTLINED_DENSE = "outlined dense"
 _PADDING_24_MB_20 = "padding: 24px; margin-bottom: 20px;"
@@ -670,22 +723,16 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             config["download_directory"] = str(dl_dir_value).strip()
         elif "download_directory" in config:
             del config["download_directory"]
-        config["max_concurrent_downloads"] = (
-            int(global_inputs["max_concurrent"].value)
-            if global_inputs["max_concurrent"].value
-            else 1
+        config["max_concurrent_downloads"] = safe_int(
+            global_inputs["max_concurrent"].value, default=1, min_value=1
         )
-        delay_str = (global_inputs["download_delay"].value or "").strip()
-        if delay_str:
-            if "," in delay_str:
-                parts = [
-                    int(x.strip()) for x in delay_str.split(",") if x.strip().isdigit()
-                ]
-                if len(parts) == 2:
-                    config["download_delay"] = parts
-            elif delay_str.isdigit():
-                config["download_delay"] = int(delay_str)
-        elif "download_delay" in config:
+        delay_raw = global_inputs["download_delay"].value
+        delay_parsed = _parse_delay_string(delay_raw)
+        if delay_parsed is not None:
+            config["download_delay"] = delay_parsed
+        elif not (str(delay_raw or "").strip()):
+            if "download_delay" in config:
+                del config["download_delay"]
             del config["download_delay"]
         config["media_types"] = global_inputs["media_types"].value
 
@@ -705,32 +752,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             del config["max_messages"]
 
         # File Formats
-        config["file_formats"] = {
-            "audio": [
-                x.strip()
-                for x in _s(global_inputs["format_audio"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-            "video": [
-                x.strip()
-                for x in _s(global_inputs["format_video"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-            "photo": [
-                x.strip()
-                for x in _s(global_inputs["format_photo"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-            "document": [
-                x.strip()
-                for x in _s(global_inputs["format_document"].value).split(",")
-                if x.strip()
-            ]
-            or ["all"],
-        }
+        config["file_formats"] = _parse_formats(global_inputs)
 
         built_chats = []
         for c_in in chat_inputs:
@@ -756,18 +778,9 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             if c_in["max_concurrent"].value is not None:
                 chat_obj["max_concurrent_downloads"] = int(c_in["max_concurrent"].value)
 
-            c_delay_str = _s(c_in["download_delay"].value)
-            if c_delay_str:
-                if "," in c_delay_str:
-                    c_delay_parts = [
-                        int(x.strip())
-                        for x in c_delay_str.split(",")
-                        if x.strip().isdigit()
-                    ]
-                    if len(c_delay_parts) == 2:
-                        chat_obj["download_delay"] = c_delay_parts
-                elif c_delay_str.isdigit():
-                    chat_obj["download_delay"] = int(c_delay_str)
+            c_delay_parsed = _parse_delay_string(c_in["download_delay"].value)
+            if c_delay_parsed is not None:
+                chat_obj["download_delay"] = c_delay_parsed
 
             if _s(c_in["start_date"].value):
                 chat_obj["start_date"] = _s(c_in["start_date"].value)
@@ -777,31 +790,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                 chat_obj["max_messages"] = int(c_in["max_messages"].value)
 
             # Chat-specific file_formats
-            chat_formats = {}
-            if _s(c_in["format_audio"].value):
-                chat_formats["audio"] = [
-                    x.strip()
-                    for x in _s(c_in["format_audio"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_video"].value):
-                chat_formats["video"] = [
-                    x.strip()
-                    for x in _s(c_in["format_video"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_photo"].value):
-                chat_formats["photo"] = [
-                    x.strip()
-                    for x in _s(c_in["format_photo"].value).split(",")
-                    if x.strip()
-                ]
-            if _s(c_in["format_document"].value):
-                chat_formats["document"] = [
-                    x.strip()
-                    for x in _s(c_in["format_document"].value).split(",")
-                    if x.strip()
-                ]
+            chat_formats = _parse_formats(c_in)
             if chat_formats:
                 chat_obj["file_formats"] = chat_formats
 

@@ -6,10 +6,7 @@ import db
 
 # Redirect the database to a temporary file so tests never touch
 # the real downloads.sqlite3 in the project root.
-try:
-    _tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
-except TypeError:
-    _tmp_dir = tempfile.TemporaryDirectory()
+_tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
 _tmp_db = tempfile.NamedTemporaryFile(
     suffix=".sqlite3", delete=False, dir=_tmp_dir.name
 )

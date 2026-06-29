@@ -21,10 +21,10 @@ def check_for_updates() -> None:
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36",
         }
-        conn = http.client.HTTPSConnection("api.github.com")
+        conn = http.client.HTTPSConnection("api.github.com", timeout=5)
         conn.request(
             method="GET",
-            url="/repos/Dineshkarthik/telegram_media_downloader/releases/latest",
+            url="/repos/xodaaaa/telegram_media_downloader/releases/latest",
             headers=headers,
         )
         res = conn.getresponse()

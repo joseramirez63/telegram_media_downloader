@@ -32,7 +32,7 @@ If you never created a pull request before, welcome [Here is a great tutorial](h
    # Install dependencies
    make dev_install
    # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/Dineshkkarthik/<repo-name>
+    git remote add upstream https://github.com/xodaaaa/telegram_media_downloader.git
 ```
 
 2. If you cloned a while ago, get the latest changes from upstream:

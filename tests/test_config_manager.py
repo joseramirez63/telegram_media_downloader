@@ -14,10 +14,7 @@ class ConfigManagerTestCase(unittest.TestCase):
 
     def setUp(self):
         """Create a temporary config file for each test."""
-        try:
-            self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
-        except TypeError:
-            self._tmpdir = tempfile.TemporaryDirectory()
+        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self._tmp = tempfile.NamedTemporaryFile(
             mode="w", suffix=".yaml", delete=False, dir=self._tmpdir.name
         )
@@ -82,7 +79,7 @@ class ConfigManagerTestCase(unittest.TestCase):
         data = {"api_id": 999, "api_hash": "xyz", "media_types": ["photo"]}
         config_manager.save_config(data)
 
-        with open(self._tmp.name, "r") as f:
+        with open(self._tmp.name) as f:
             loaded = yaml.safe_load(f)
 
         self.assertEqual(loaded["api_id"], 999)
@@ -105,7 +102,7 @@ class ConfigManagerTestCase(unittest.TestCase):
         data = OrderedDict([("z_key", 1), ("a_key", 2), ("m_key", 3)])
         config_manager.save_config(dict(data))
 
-        with open(self._tmp.name, "r") as f:
+        with open(self._tmp.name) as f:
             content = f.read()
 
         # z_key should appear before a_key in the output

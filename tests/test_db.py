@@ -40,10 +40,7 @@ class TestGetTotalDownloadedBytes(unittest.TestCase):
     def setUp(self):
         db._db_initialized = False
 
-        try:
-            self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
-        except TypeError:
-            self._tmpdir = tempfile.TemporaryDirectory()
+        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self._db_file = tempfile.NamedTemporaryFile(
             delete=False, suffix=".sqlite3", dir=self._tmpdir.name
         )
@@ -77,10 +74,7 @@ class TestDB(unittest.TestCase):
         # Reset initialized flag for fresh testing
         db._db_initialized = False
         # Create a unique temporary file for this test
-        try:
-            self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
-        except TypeError:
-            self._tmpdir = tempfile.TemporaryDirectory()
+        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.test_db_file = tempfile.NamedTemporaryFile(
             delete=False, suffix=".sqlite3", dir=self._tmpdir.name
         )

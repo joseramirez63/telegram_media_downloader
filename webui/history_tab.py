@@ -1,11 +1,11 @@
 """History tab UI for the Telegram Media Downloader Web UI."""
 
 import os
-import urllib.parse
 
 from nicegui import ui
 
 import db
+from utils.file_management import to_media_url
 
 _FONT_13 = "font-size: 13px;"
 
@@ -184,22 +184,7 @@ def build_history_tab(config: dict, open_media_fn, this_dir: str):  # NOSONAR
             for r in records:
                 MB = r["file_size"] / (1024 * 1024)
                 fpath = r.get("file_path", "")
-                file_url = ""
-                if fpath:
-                    try:
-                        abs_fpath = os.path.abspath(fpath)
-                        abs_base = (
-                            os.path.abspath(global_download_dir)
-                            if global_download_dir
-                            else this_dir
-                        )
-                        if abs_fpath.startswith(abs_base):
-                            rel_path = os.path.relpath(abs_fpath, abs_base)
-                            rel_path = rel_path.replace("\\", "/")
-                            encoded_path = urllib.parse.quote(rel_path, safe="/")
-                            file_url = f"/media/{encoded_path}"
-                    except Exception:
-                        pass
+                file_url = to_media_url(fpath, global_download_dir, this_dir) if fpath else ""
                 rows.append(
                     {
                         "id": r["id"],
