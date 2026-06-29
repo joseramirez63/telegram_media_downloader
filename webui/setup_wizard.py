@@ -320,9 +320,6 @@ def build_setup_wizard(  # NOSONAR
                 )
                 verify_btn_ref["btn"] = _verify_btn
             verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
-            parallel_warn = ui.label("").style(
-                "display: none; font-size: 11px; color: var(--warning); margin-top: 2px;"
-            )
 
             # Browse My Chats toggle
             browse_state = {
@@ -478,10 +475,11 @@ def build_setup_wizard(  # NOSONAR
             browse_btn_ref["btn"].set_text("Browse My Chats")
             browse_btn_ref["btn"].props("flat dense color=grey-7")
             if len(config.get("chats", [])) + 1 >= 4:
-                parallel_warn.set_text(
-                    "Parallel Downloads is not recommended with 4+ chats."
+                ui.notify(
+                    "Parallel Downloads is not recommended with 4+ chats.",
+                    type="warning",
+                    position="top",
                 )
-                parallel_warn.set_visibility(True)
 
         with footer_area:
             ui.button("Back", on_click=_go_back).props(_FLAT_GREY).style(_FONT_13)

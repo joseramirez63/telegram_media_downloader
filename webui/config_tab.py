@@ -345,9 +345,18 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
             global_inputs["parallel_chats"] = ui.checkbox(
                 "Parallel Chats",
                 value=config.get("parallel_chats", False),
+                on_change=lambda e: (
+                    ui.notify(
+                        "Parallel downloads may cause Telegram flood limits with many chats.",
+                        type="warning",
+                        position="top",
+                    )
+                    if e.value
+                    else None
+                ),
             ).style("color: var(--text-secondary);")
             ui.label(
-                "Parallel downloads are not recommended with 4+ chats. May cause Telegram flood limits."
+                "Not recommended with 4+ chats. May cause Telegram flood limits."
             ).style(
                 "font-size: 10px; color: var(--text-tertiary); margin-top: 2px;"
             )
@@ -681,9 +690,6 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                         "Verify", on_click=lambda: _verify()
                     ).props("outline dense color=info").style("font-size: 13px;")
                 verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
-                parallel_warn = ui.label("").style(
-                    "display: none; font-size: 11px; color: var(--warning); margin-top: 2px;"
-                )
 
                 async def _verify():
                     chat_val = str(chat_in.value or "").strip()
@@ -767,10 +773,11 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     browse_container.style("display: none;")
                     browse_state["open"] = False
                     if len(chat_inputs) + 1 >= 4:
-                        parallel_warn.set_text(
-                            "Parallel Downloads is not recommended with 4+ chats."
+                        ui.notify(
+                            "Parallel Downloads is not recommended with 4+ chats.",
+                            type="warning",
+                            position="top",
                         )
-                        parallel_warn.set_visibility(True)
 
                 async def _toggle_browse_dialog():
                     if browse_state["open"]:
@@ -805,10 +812,11 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     chat_val = (chat_in.value or "").strip()
                     if chat_val:
                         if len(chat_inputs) + 1 >= 4:
-                            parallel_warn.set_text(
-                                "Parallel Downloads is not recommended with 4+ chats."
+                            ui.notify(
+                                "Parallel Downloads is not recommended with 4+ chats.",
+                                type="warning",
+                                position="top",
                             )
-                            parallel_warn.set_visibility(True)
                         add_chat_ui({"chat_id": chat_val, "last_read_message_id": 0, "ids_to_retry": []})
                         add_dialog.close()
                 ui.button("Add Chat", on_click=_confirm_add, icon="add").props("unelevated color=primary").style("font-size: 13px; padding: 6px 24px;")
