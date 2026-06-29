@@ -3,6 +3,7 @@
 import asyncio
 import os
 import string
+from typing import Any
 
 from nicegui import ui
 
@@ -93,7 +94,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
     tuple[dict, list]
         ``(global_inputs, chat_inputs)`` — references other tabs may need.
     """
-    global_inputs = {}
+    global_inputs: dict[str, Any] = {}
     chat_inputs: list = []
 
     # Page Header
