@@ -468,8 +468,16 @@ def build_execution_tab(  # NOSONAR
 
     stop_download_fn["fn"] = stop_download
 
-    # Timers
-    ui.timer(0.5, update_speed_display)
+    # Timers — wrapped to survive page reloads (parent slot can be deleted)
+    def _safe_callback(fn):
+        def _wrapper():
+            try:
+                fn()
+            except RuntimeError:
+                pass
+        return _wrapper
+
+    ui.timer(0.5, _safe_callback(update_speed_display))
 
     def update_pending():
         if pending_label is not None:
@@ -483,7 +491,7 @@ def build_execution_tab(  # NOSONAR
             else:
                 pending_label.style("color: var(--text-secondary);")
 
-    ui.timer(0.5, update_pending)
-    ui.timer(1.0, update_total_gb)
-    ui.timer(2.0, update_media_counts)
+    ui.timer(0.5, _safe_callback(update_pending))
+    ui.timer(1.0, _safe_callback(update_total_gb))
+    ui.timer(2.0, _safe_callback(update_media_counts))
     update_total_gb()

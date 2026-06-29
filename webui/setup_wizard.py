@@ -391,29 +391,31 @@ def build_setup_wizard(  # NOSONAR
                 return
             if browse_state["loading"]:
                 return
-            browse_state["loading"] = True
-            browse_btn_ref["btn"].set_text("Loading...")
-            browse_btn_ref["btn"].set_enabled(False)
-            dialogs = await media_downloader.get_user_dialogs(
-                wizard_state["api_id"],
-                wizard_state["api_hash"],
-                wizard_state.get("client"),
-            )
-            browse_state["dialogs"] = dialogs
-            browse_state["page"] = 0
-            browse_state["loading"] = False
+            # Only fetch dialogs once, cache them for subsequent opens
+            if not browse_state.get("loaded"):
+                browse_state["loading"] = True
+                browse_btn_ref["btn"].set_text("Loading...")
+                browse_btn_ref["btn"].set_enabled(False)
+                dialogs = await media_downloader.get_user_dialogs(
+                    wizard_state["api_id"],
+                    wizard_state["api_hash"],
+                    wizard_state.get("client"),
+                )
+                browse_state["dialogs"] = dialogs
+                browse_state["loaded"] = True
+                browse_state["loading"] = False
+                browse_btn_ref["btn"].set_enabled(True)
+                if not dialogs:
+                    browse_btn_ref["btn"].set_text("Browse My Chats")
+                    browse_btn_ref["btn"].props("flat dense color=grey-7")
+                    verify_label.set_text("No chats found or unable to connect.")
+                    verify_label.style("color: var(--negative);")
+                    return
+            browse_state["open"] = True
             browse_btn_ref["btn"].set_text("Hide My Chats")
             browse_btn_ref["btn"].props("flat dense color=positive")
-            browse_btn_ref["btn"].set_enabled(True)
-            if dialogs:
-                browse_container.style("display: flex;")
-                _render_browse_page()
-            else:
-                browse_state["open"] = True
-                browse_btn_ref["btn"].set_text("Browse My Chats")
-                browse_btn_ref["btn"].props("flat dense color=grey-7")
-                verify_label.set_text("No chats found or unable to connect.")
-                verify_label.style("color: var(--negative);")
+            browse_container.style("display: flex;")
+            _render_browse_page()
 
         def _render_browse_page():
             browse_list.clear()
