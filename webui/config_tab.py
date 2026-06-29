@@ -645,58 +645,76 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
 
     def _show_add_chat_dialog():
         add_dialog = ui.dialog()
-        with add_dialog, ui.card().style("max-width: 500px; width: 90vw; padding: 24px;"):
-            with ui.row().style("gap: 10px; align-items: center; margin-bottom: 16px;"):
-                ui.icon("forum", size="sm", color="primary")
-                ui.label("Add Chat").style("font-size: 16px; font-weight: 600;")
+        with add_dialog, ui.card().style(
+            "width: 480px; max-width: 90vw; border-radius: var(--radius-xl);"
+            " border: 1px solid var(--border); overflow: hidden;"
+        ):
+            with ui.row().classes("items-center justify-between").style(
+                "padding: 20px 24px 0 24px;"
+            ):
+                ui.label("Add Chat").style(
+                    "font-size: 18px; font-weight: 700;"
+                    " color: var(--text-primary); letter-spacing: -0.01em;"
+                )
+                ui.button(
+                    icon="close", on_click=add_dialog.close
+                ).props("flat dense round color=grey-6")
 
-            chat_in = ui.input("Chat ID / @username").props(_OUTLINED_DENSE).style("width: 100%;")
-            verify_label = ui.label("").style("font-size: 11px; font-weight: 500;")
+            with ui.column().style("padding: 16px 24px; gap: 12px;"):
+                chat_in = ui.input("Chat ID / @username").props("outlined dense").classes("w-full")
+                verify_label = ui.label("").style("font-size: 12px; font-weight: 500;")
 
-            with ui.row().style("gap: 8px; width: 100%;"):
-                async def _verify():
-                    chat_val = str(chat_in.value or "").strip()
-                    if not chat_val:
-                        verify_label.set_text("Enter a chat ID or @username first.")
-                        verify_label.style("color: var(--text-tertiary);")
-                        return
-                    verify_label.set_text("Verifying...")
-                    verify_label.style("color: var(--text-secondary);")
-                    try:
-                        chat_id_val = int(chat_val)
-                    except ValueError:
-                        chat_id_val = chat_val
-                    try:
-                        name = await asyncio.wait_for(
-                            media_downloader.resolve_chat_entity(
-                                config.get("api_id", 0),
-                                config.get("api_hash", ""),
-                                chat_id_val,
-                            ),
-                            timeout=10.0,
-                        )
-                    except (asyncio.TimeoutError, Exception):
-                        name = None
-                    if name:
-                        chat_in.set_value(name)
-                        chat_in.props(_OUTLINED_DENSE + ' color="positive"')
-                        verify_label.set_text("Chat detected")
-                        verify_label.style("color: var(--positive);")
-                    else:
-                        verify_label.set_text("Could not resolve. Check the ID/username.")
-                        verify_label.style("color: var(--negative);")
+                with ui.row().style("gap: 8px; align-items: flex-end;"):
+                    async def _verify():
+                        chat_val = str(chat_in.value or "").strip()
+                        if not chat_val:
+                            verify_label.set_text("Enter a chat ID or @username first.")
+                            verify_label.style("color: var(--text-tertiary);")
+                            return
+                        verify_label.set_text("Verifying...")
+                        verify_label.style("color: var(--text-secondary);")
+                        try:
+                            chat_id_val = int(chat_val)
+                        except ValueError:
+                            chat_id_val = chat_val
+                        try:
+                            name = await asyncio.wait_for(
+                                media_downloader.resolve_chat_entity(
+                                    config.get("api_id", 0),
+                                    config.get("api_hash", ""),
+                                    chat_id_val,
+                                ),
+                                timeout=10.0,
+                            )
+                        except (asyncio.TimeoutError, Exception):
+                            name = None
+                        if name:
+                            chat_in.set_value(name)
+                            chat_in.props('outlined dense color="positive"')
+                            verify_label.set_text("Chat detected")
+                            verify_label.style("color: var(--positive);")
+                        else:
+                            verify_label.set_text("Could not resolve. Check the ID/username.")
+                            verify_label.style("color: var(--negative);")
 
-                ui.button("Verify", on_click=_verify).props("flat dense color=info size=sm")
+                    ui.button("Verify", on_click=_verify).props("outline dense color=info").style("font-size: 13px;")
 
                 browse_state = {"open": False, "dialogs": [], "page": 0, "loaded": False}
-                browse_container = ui.column().style("display: none; gap: 4px; width: 100%; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-top: 4px;")
+                browse_container = ui.column().style(
+                    "display: none; gap: 6px; padding: 8px; width: 100%;"
+                    " max-height: 220px; overflow-y: auto;"
+                    " border: 1px solid var(--border); border-radius: 8px;"
+                )
                 with browse_container:
                     browse_list = ui.column().style("gap: 2px;")
-                    with ui.row().style("justify-content: space-between; align-items: center; padding: 2px 0; border-top: 1px solid var(--border); margin-top: 4px;"):
-                        browse_page_label = ui.label("").style("font-size: 10px; color: var(--text-tertiary);")
+                    with ui.row().style(
+                        "justify-content: space-between; align-items: center;"
+                        " padding: 4px 0; border-top: 1px solid var(--border);"
+                    ):
+                        browse_page_label = ui.label("").style("font-size: 11px; color: var(--text-tertiary);")
                         with ui.row().style("gap: 4px;"):
-                            browse_prev_btn = ui.button("Prev", on_click=lambda: _browse_page(-1)).props("flat dense size=sm color=grey-7").style("font-size: 10px;")
-                            browse_next_btn = ui.button("Next", on_click=lambda: _browse_page(1)).props("flat dense size=sm color=grey-7").style("font-size: 10px;")
+                            browse_prev_btn = ui.button("Prev", on_click=lambda: _browse_page(-1)).props("flat dense size=sm color=grey-7").style("font-size: 11px;")
+                            browse_next_btn = ui.button("Next", on_click=lambda: _browse_page(1)).props("flat dense size=sm color=grey-7").style("font-size: 11px;")
 
                 def _render_browse():
                     browse_list.clear()
@@ -705,13 +723,13 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     per_page = 5
                     start = page * per_page
                     end = start + per_page
+                    icon_map = {"channel": "campaign", "group": "groups", "bot": "smart_toy", "user": "person"}
                     for d in dialogs[start:end]:
-                        icon_map = {"channel": "campaign", "group": "groups", "bot": "smart_toy", "user": "person"}
                         with browse_list:
                             with ui.row().style("gap: 6px; align-items: center; width: 100%;"):
                                 ui.icon(icon_map.get(d["type"], "chat"), size="xs").style("color: var(--text-tertiary);")
-                                ui.label(d["name"]).style("font-size: 11px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;")
-                                ui.button("Select", on_click=lambda d=d: _select_browse(d)).props("flat dense size=sm color=primary").style("font-size: 10px;")
+                                ui.label(d["name"]).style("font-size: 12px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;")
+                                ui.button("Select", on_click=lambda d=d: _select_browse(d)).props("flat dense size=sm color=primary").style("font-size: 11px;")
                     total_pages = max(1, -(-len(dialogs) // per_page))
                     browse_page_label.set_text(f"Page {page + 1} of {total_pages}")
                     browse_prev_btn.set_enabled(page > 0)
@@ -725,7 +743,7 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
 
                 def _select_browse(dialog):
                     chat_in.set_value(dialog["name"])
-                    chat_in.props(_OUTLINED_DENSE + ' color="positive"')
+                    chat_in.props('outlined dense color="positive"')
                     verify_label.set_text("Chat selected")
                     verify_label.style("color: var(--positive);")
                     browse_container.style("display: none;")
@@ -746,16 +764,20 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     browse_container.style("display: block;")
                     _render_browse()
 
-                ui.button("Browse My Chats", on_click=_toggle_browse_dialog).props("flat dense color=grey-7").style("font-size: 12px;")
+                ui.button(
+                    "Browse My Chats", icon="list", on_click=_toggle_browse_dialog
+                ).props("flat dense color=grey-7").style(
+                    "font-size: 12px; width: 100%; justify-content: flex-start; margin-top: 4px;"
+                )
 
-            with ui.row().style("gap: 8px; width: 100%; justify-content: flex-end; margin-top: 16px;"):
-                ui.button("Cancel", on_click=add_dialog.close).props("flat dense color=grey-7")
+            with ui.row().style("gap: 8px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border);"):
+                ui.button("Cancel", on_click=add_dialog.close).props("flat dense color=grey-7").style("font-size: 13px;")
                 def _confirm_add():
                     chat_val = (chat_in.value or "").strip()
                     if chat_val:
                         add_chat_ui({"chat_id": chat_val, "last_read_message_id": 0, "ids_to_retry": []})
                         add_dialog.close()
-                ui.button("Add Chat", on_click=_confirm_add, icon="add").props("unelevated color=primary dense")
+                ui.button("Add Chat", on_click=_confirm_add, icon="add").props("unelevated color=primary").style("font-size: 13px; padding: 6px 24px;")
 
         add_dialog.open()
 
