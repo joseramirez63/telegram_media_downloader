@@ -1,9 +1,11 @@
 """Execution tab UI for the Telegram Media Downloader Web UI."""
 
+from dataclasses import dataclass, field
 import logging
 import os
 import time
 import urllib.parse
+from typing import Any, Optional
 
 from nicegui import ui
 
@@ -17,6 +19,25 @@ _FONT_10_500 = (
     " color: var(--text-tertiary); text-transform: uppercase;"
     " letter-spacing: 0.05em;"
 )
+
+
+@dataclass
+class ActiveDownloadEntry:
+    """Mutable entry tracking a single active download in the Execution tab.
+
+    All fields except ``row``, ``name_label``, ``bar``, ``info_label``,
+    and ``action_col`` (NiceGUI elements) are plain data.
+    """
+
+    row: Any = None
+    name_label: Any = None
+    bar: Any = None
+    info_label: Any = None
+    action_col: Any = None
+    start_time: float = 0.0
+    last_bytes: int = 0
+    visible: bool = True
+    completed: bool = False
 
 
 def build_execution_tab(  # NOSONAR
@@ -164,7 +185,7 @@ def build_execution_tab(  # NOSONAR
 
     def _update_empty_state():
         if "el" in empty_state_ref:
-            has_visible = any(entry[7] for entry in active_downloads.values())
+            has_visible = any(entry.visible for entry in active_downloads.values())
             if has_visible:
                 empty_state_ref["el"].style(_DISPLAY_NONE)
             else:
@@ -284,55 +305,55 @@ def build_execution_tab(  # NOSONAR
                     action_col = ui.column().style(
                         "min-width: 40px; align-items: flex-end;"
                     )
-                active_downloads[desc] = [
-                    row,
-                    name_label,
-                    bar,
-                    info_label,
-                    action_col,
-                    now,
-                    0,
-                    True,  # visible
-                    False,  # completed
-                ]
+                active_downloads[desc] = ActiveDownloadEntry(
+                    row=row,
+                    name_label=name_label,
+                    bar=bar,
+                    info_label=info_label,
+                    action_col=action_col,
+                    start_time=now,
+                    last_bytes=0,
+                    visible=True,
+                    completed=False,
+                )
                 download_order.append(desc)
                 _update_empty_state()
                 # Max 4 visible: hide oldest completed first
                 visible_count = sum(
                     1
                     for d in download_order
-                    if d in active_downloads and active_downloads[d][7]
+                    if d in active_downloads and active_downloads[d].visible
                 )
                 while visible_count > 4:
                     removed = None
                     for d in download_order:
                         if (
                             d in active_downloads
-                            and active_downloads[d][7]
-                            and active_downloads[d][8]
+                            and active_downloads[d].visible
+                            and active_downloads[d].completed
                         ):
                             removed = d
                             break
                     if removed is None:
                         for d in download_order:
-                            if d in active_downloads and active_downloads[d][7]:
+                            if d in active_downloads and active_downloads[d].visible:
                                 removed = d
                                 break
                     if removed:
                         try:
-                            active_downloads[removed][0].style(_DISPLAY_NONE)
+                            active_downloads[removed].row.style(_DISPLAY_NONE)
                         except Exception:
                             pass
-                        active_downloads[removed][7] = False
+                        active_downloads[removed].visible = False
                         visible_count -= 1
 
         entry = active_downloads[desc]
-        row = entry[0]
-        name_label = entry[1]
-        bar = entry[2]
-        info_label = entry[3]
-        action_col = entry[4]
-        start_time = entry[5]
+        row = entry.row
+        name_label = entry.name_label
+        bar = entry.bar
+        info_label = entry.info_label
+        action_col = entry.action_col
+        start_time = entry.start_time
 
         if total > 0:
             fraction = current / total
@@ -362,7 +383,7 @@ def build_execution_tab(  # NOSONAR
             info_label.set_text(info_text)
 
             if current >= total:
-                entry[8] = True  # mark completed
+                entry.completed = True  # mark completed
                 row.style("order: 1;")
                 name_label.style(
                     "font-size: 13px; font-weight: 600;"
@@ -405,8 +426,8 @@ def build_execution_tab(  # NOSONAR
                                 "font-size: 12px;"
                             )
 
-            active_downloads[desc][5] = start_time
-            active_downloads[desc][6] = current
+            entry.start_time = start_time
+            entry.last_bytes = current
         else:
             bar.set_value(0)
             info_label.set_text("...")
@@ -422,15 +443,7 @@ def build_execution_tab(  # NOSONAR
             return
         is_running["value"] = True
         switched_to_monitor = False
-        media_downloader.PENDING_IDS.clear()
-        media_downloader.FAILED_IDS.clear()
-        media_downloader.DOWNLOADED_IDS.clear()
-        media_downloader.PROCESSED_IDS.clear()
-        media_downloader.CURRENT_BATCH_IDS.clear()
-        media_downloader.BACKLOG_ITERATED.clear()
-        media_downloader.BACKLOG_DONE.clear()
-        media_downloader.CHAT_TITLES.clear()
-        media_downloader._ERROR_LOG.clear()
+        media_downloader.reset_runtime_state()
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
         try:
@@ -513,15 +526,7 @@ def build_execution_tab(  # NOSONAR
             )
             return
         is_monitoring["value"] = True
-        media_downloader.PENDING_IDS.clear()
-        media_downloader.FAILED_IDS.clear()
-        media_downloader.DOWNLOADED_IDS.clear()
-        media_downloader.PROCESSED_IDS.clear()
-        media_downloader.CURRENT_BATCH_IDS.clear()
-        media_downloader.BACKLOG_ITERATED.clear()
-        media_downloader.BACKLOG_DONE.clear()
-        media_downloader.CHAT_TITLES.clear()
-        media_downloader._ERROR_LOG.clear()
+        media_downloader.reset_runtime_state()
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
         try:

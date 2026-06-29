@@ -149,20 +149,11 @@ downloads/
 
 ---
 
-## 🔒 Proxy
+## 📋 Browse Chats
 
-Add to `config.yaml` (optional):
-
-```yaml
-proxy:
-  scheme: socks5
-  hostname: 11.22.33.44
-  port: 1234
-  username: your_username    # optional
-  password: your_password    # optional
-```
-
-Supports `socks4`, `socks5`, `http`.
+The **Setup Wizard** and **Configuration** tab include a **"Browse My Chats"**
+button that opens a dialog list (paginated, 5 pages). Select a chat to verify
+its name and auto-fill the input field.
 
 ---
 

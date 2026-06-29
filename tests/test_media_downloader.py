@@ -19,11 +19,13 @@ from media_downloader import (
     _get_media_meta,
     _is_exist,
     _progress_callback,
+    _resolve_date_filters,
     begin_import,
     download_media,
     get_media_type,
     main,
     process_messages,
+    reset_runtime_state,
     update_config,
 )
 
@@ -894,7 +896,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertEqual(14, result)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import(self, mock_update_config):
         result = self.loop.run_until_complete(async_begin_import(MOCK_CONF, 3))
@@ -903,24 +905,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
-    @mock.patch("media_downloader.process_messages", new=mock_process_message)
-    def test_begin_import_with_proxy(self, mock_update_config):
-        conf_with_proxy = copy.deepcopy(MOCK_CONF)
-        conf_with_proxy["proxy"] = {
-            "scheme": "socks5",
-            "hostname": "127.0.0.1",
-            "port": 1080,
-            "username": "user",
-            "password": "pass",  # NOSONAR
-        }
-        result = self.loop.run_until_complete(async_begin_import(conf_with_proxy, 3))
-        expected_conf = copy.deepcopy(conf_with_proxy)
-        expected_conf["last_read_message_id"] = 5
-        self.assertDictEqual(result, expected_conf)
-
-    @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_custom_directory(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -931,7 +916,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, expected_conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_start_date(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -942,7 +927,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, expected_conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_end_date(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -953,7 +938,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, expected_conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_max_messages(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -964,7 +949,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, expected_conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_max_messages_string(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -975,7 +960,7 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertDictEqual(result, expected_conf)
 
     @mock.patch("media_downloader.update_config")
-    @mock.patch("media_downloader.TelegramClient", new=MockClient)
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_messages", new=mock_process_message)
     def test_begin_import_with_start_date_date_object(self, mock_update_config):
         conf = copy.deepcopy(MOCK_CONF)
@@ -1098,9 +1083,9 @@ class MediaDownloaderTestCase(unittest.TestCase):
         result2 = _is_exist(this_dir)
         self.assertFalse(result2)
 
-    @mock.patch("media_downloader.TelegramClient", return_value=MockClient())
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_chat")
-    def test_begin_import_multiple_chats(self, mock_process_chat, mock_client):
+    def test_begin_import_multiple_chats(self, mock_process_chat):
         conf = {
             "api_id": 123,
             "api_hash": "has",
@@ -1114,9 +1099,9 @@ class MediaDownloaderTestCase(unittest.TestCase):
         self.assertEqual(mock_process_chat.call_count, 2)
         self.assertEqual(result, conf)
 
-    @mock.patch("media_downloader.TelegramClient", return_value=MockClient())
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
     @mock.patch("media_downloader.process_chat")
-    def test_begin_import_parallel_chats(self, mock_process_chat, mock_client):
+    def test_begin_import_parallel_chats(self, mock_process_chat):
         conf = {
             "api_id": 123,
             "api_hash": "has",
@@ -1126,8 +1111,8 @@ class MediaDownloaderTestCase(unittest.TestCase):
         _ = self.loop.run_until_complete(async_begin_import(conf, 100))
         self.assertEqual(mock_process_chat.call_count, 2)
 
-    @mock.patch("media_downloader.TelegramClient", return_value=MockClient())
-    def test_begin_import_missing_chat_id(self, mock_client):
+    @mock.patch("media_downloader.build_telegram_client", new=lambda *a, **kw: MockClient())
+    def test_begin_import_missing_chat_id(self):
         conf = {"api_id": 123, "api_hash": "has"}
         with self.assertRaises(KeyError):
             self.loop.run_until_complete(async_begin_import(conf, 100))
@@ -1606,3 +1591,129 @@ class MediaDownloaderTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.loop.close()
+
+
+class TestResolveDateFilters(unittest.TestCase):
+    """Tests for _resolve_date_filters()."""
+
+    def test_none_when_no_dates_configured(self):
+        start, end, max_msg = _resolve_date_filters({}, {})
+        self.assertIsNone(start)
+        self.assertIsNone(end)
+        self.assertIsNone(max_msg)
+
+    def test_iso_string_dates(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"start_date": "2023-01-15", "end_date": "2023-12-31"},
+            {},
+        )
+        self.assertEqual(start, datetime(2023, 1, 15, tzinfo=timezone.utc))
+        self.assertEqual(end, datetime(2023, 12, 31, tzinfo=timezone.utc))
+        self.assertIsNone(max_msg)
+
+    def test_date_object_dates(self):
+        from datetime import date
+
+        start, end, max_msg = _resolve_date_filters(
+            {"start_date": date(2024, 6, 1)},
+            {"end_date": date(2024, 12, 31)},
+        )
+        self.assertEqual(
+            start,
+            datetime.combine(date(2024, 6, 1), datetime.min.time(), tzinfo=timezone.utc),
+        )
+        self.assertEqual(
+            end,
+            datetime.combine(date(2024, 12, 31), datetime.min.time(), tzinfo=timezone.utc),
+        )
+        self.assertIsNone(max_msg)
+
+    def test_chat_overrides_global(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"start_date": "2025-01-01"},
+            {"start_date": "2020-01-01"},
+        )
+        self.assertEqual(start, datetime(2025, 1, 1, tzinfo=timezone.utc))
+        self.assertIsNone(end)
+        self.assertIsNone(max_msg)
+
+    def test_global_fallback(self):
+        start, end, max_msg = _resolve_date_filters(
+            {},
+            {"end_date": "2024-06-15"},
+        )
+        self.assertIsNone(start)
+        self.assertEqual(end, datetime(2024, 6, 15, tzinfo=timezone.utc))
+        self.assertIsNone(max_msg)
+
+    def test_empty_string_is_none(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"start_date": "", "end_date": "   "},
+            {},
+        )
+        self.assertIsNone(start)
+        self.assertIsNone(end)
+        self.assertIsNone(max_msg)
+
+    def test_max_messages_int(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"max_messages": 50},
+            {},
+        )
+        self.assertIsNone(start)
+        self.assertIsNone(end)
+        self.assertEqual(max_msg, 50)
+
+    def test_max_messages_string(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"max_messages": "25"},
+            {},
+        )
+        self.assertIsNone(start)
+        self.assertIsNone(end)
+        self.assertEqual(max_msg, 25)
+
+    def test_max_messages_empty_string(self):
+        start, end, max_msg = _resolve_date_filters(
+            {"max_messages": ""},
+            {},
+        )
+        self.assertIsNone(max_msg)
+
+    def test_max_messages_global_fallback(self):
+        start, end, max_msg = _resolve_date_filters(
+            {},
+            {"max_messages": 100},
+        )
+        self.assertEqual(max_msg, 100)
+
+
+class TestResetRuntimeState(unittest.TestCase):
+    """Tests for reset_runtime_state()."""
+
+    def setUp(self):
+        import media_downloader
+
+        # Populate dicts with dummy data
+        media_downloader.PENDING_IDS[1] = 5
+        media_downloader.FAILED_IDS[2] = [1, 2]
+        media_downloader.DOWNLOADED_IDS[3] = [10]
+        media_downloader.PROCESSED_IDS[4] = [20]
+        media_downloader.CURRENT_BATCH_IDS[5] = [30, 31]
+        media_downloader.BACKLOG_ITERATED[6] = 40
+        media_downloader.BACKLOG_DONE[7] = 50
+        media_downloader.CHAT_TITLES["8"] = "Test Chat"
+
+    def test_clears_all_dicts(self):
+        import media_downloader
+
+        reset_runtime_state()
+
+        self.assertEqual(media_downloader.PENDING_IDS, {})
+        self.assertEqual(media_downloader.FAILED_IDS, {})
+        self.assertEqual(media_downloader.DOWNLOADED_IDS, {})
+        self.assertEqual(media_downloader.PROCESSED_IDS, {})
+        self.assertEqual(media_downloader.CURRENT_BATCH_IDS, {})
+        self.assertEqual(media_downloader.BACKLOG_ITERATED, {})
+        self.assertEqual(media_downloader.BACKLOG_DONE, {})
+        self.assertEqual(media_downloader.CHAT_TITLES, {})

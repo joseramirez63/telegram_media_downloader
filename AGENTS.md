@@ -1,5 +1,12 @@
 # Telegram Media Downloader - Agent Context
 
+Last updated: **2026-06-28**
+- Removed proxy support (simplified `build_telegram_client` helper)
+- Removed Debug tab and `utils/obfuscate.py` (unused functionality)
+- Added `utils/telegram_client.py` with `build_telegram_client()` factory
+- Added `_get_chats_to_process()` helper to centralize chat extraction
+- Cleaned up `_ErrorCaptureHandler`, `_ERROR_LOG` from `media_downloader.py`
+
 This file provides architectural context, coding guidelines, and project
 conventions for AI coding agents (Gemini, Copilot, Cursor, etc.) working on
 this repository.
@@ -29,6 +36,8 @@ preview.
   - `BACKLOG_ITERATED` / `BACKLOG_DONE` — backlog counters for history mode UI.
   - `CHAT_TITLES` — resolved chat display names (set once per chat, used by History tab).
   - `UI_PROGRESS_HOOK` — callback set by Web UI to receive real-time progress.
+  - `_VERIFY_LOCK` — `asyncio.Lock()` mutex preventing concurrent session access
+    during chat verification and dialog browsing.
 - **Persistence**: `update_config()` saves `FAILED_IDS` into `ids_to_retry` and
   writes the whole `config.yaml` after every batch (or on stop). Uses set
   operations to deduplicate and sort `ids_to_retry`.
@@ -69,6 +78,13 @@ Key functions implementing these modes:
   client, connects, resolves a chat ID/@username to its display name, then
   disconnects. Returns the name as `str` or `None`. Used by Verify buttons
   in the wizard and config tab.
+- `resolve_chat_entity(api_id, api_hash, chat_id)` — creates a temporary
+  client, connects, resolves a chat ID/@username to its display name, then
+  disconnects. Returns the name as `str` or `None`. Used by Verify buttons
+  in the wizard and config tab.
+- `get_user_dialogs(api_id, api_hash, client=None)` — retrieves the user's
+  dialogs (chats, channels, groups, bots) via `iter_dialogs()`, sorted with
+  channels first. Returns `list[dict]`. Used by "Browse My Chats" in wizard.
 - `send_auth_code(api_id, api_hash, phone)` — creates a client, connects,
   requests an SMS code, and returns `{phone_code_hash, client}`. Used by the
   setup wizard for first-run phone verification.
@@ -80,6 +96,17 @@ Key functions implementing these modes:
   delay value from config (fixed float, random range `[min, max]`, or `None`).
   Centralized helper used by both `process_messages` (history) and
   `register_monitor_handler` (monitor) to avoid code duplication.
+- `build_telegram_client(api_id, api_hash, *, session_name="media_downloader")`
+  — centralized factory in `utils/telegram_client.py`. Returns a `TelegramClient`
+  with the standard device metadata (`DEVICE_MODEL`, `SYSTEM_VERSION`,
+  `APP_VERSION`, `LANG_CODE`). Used by `begin_import`, `begin_monitor`,
+  `check_account_premium`, `resolve_chat_entity`, `get_user_dialogs`,
+  `send_auth_code`.
+- `_get_chats_to_process(config, *, raise_on_missing=True)` — extracts the list
+  of per-chat config dicts from `config["chats"]` (or wraps the legacy
+  single-`chat_id` config into a list). Raises `KeyError` by default if no
+  chats configuration is found. Used by `begin_import`, `begin_monitor`, and
+  the `main()` `KeyboardInterrupt` handler (with `raise_on_missing=False`).
 
 ### `history_monitor` auto-switch behavior
 
@@ -300,6 +327,8 @@ SQLite database at `downloads.sqlite3` (relative to `db.py`).
   - `get_recent_downloads()` — with search, filter, sort, pagination.
   - `get_total_downloaded_bytes()` — `SELECT COALESCE(SUM(file_size), 0)`;
     returns `int`. Used for the "Total GB" metric.
+  - `get_download_counts()` — `SELECT media_type, COUNT(*) ... GROUP BY`;
+    returns `{"video": N, "photo": M}`. Used for the video/photo metric.
   - `format_bytes(n)` — human-readable (B → KB → MB → GB → TB). Handles
     `n <= 0` as "0 B".
   - `reset_history()` — clears all records.
@@ -530,12 +559,13 @@ As of the last SonarCloud analysis (June 2026):
 The `.deepsource.toml` suppresses these rules as false positives:
 
 | Rule | Excluded | Reason |
-|---|---|---|
+|---|---|
 | `PYL-R0201` | `tests/**` | Mock methods must match parent class signatures (can't use @staticmethod on overrides) |
 | `PTC-W0065` | `webui/**` | Nested functions used by NiceGUI callbacks/closures — not dead code |
 | `PTC-W0062` | `webui/**` | NiceGUI `with` blocks create DOM hierarchy — merging would flatten layout |
 | `PYL-W0108` | `webui/**` | Lambdas needed for late binding (functions defined after buttons) |
 | `PYL-E1102` | `webui/execution_tab.py`, `tests/**` | Dict late-binding for stop callbacks; test mock captures are callable at runtime |
+| `PYC-R0202` | `tests/**` | Mock methods must match parent class signatures (can't use @classmethod on overrides) |
 
 ### Implemented DeepSource Fixes
 

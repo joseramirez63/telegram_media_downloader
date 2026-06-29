@@ -19,8 +19,8 @@ import config_manager
 import db
 from utils.file_management import get_next_name, manage_duplicate_file
 from utils.log import LogFilter
-from utils.meta import (APP_VERSION, DEVICE_MODEL, LANG_CODE, SYSTEM_VERSION,
-                        print_meta)
+from utils.meta import print_meta
+from utils.telegram_client import build_telegram_client
 from utils.updates import check_for_updates
 
 logging.basicConfig(
@@ -32,31 +32,6 @@ logging.basicConfig(
 logging.getLogger("telethon.client.downloads").addFilter(LogFilter())
 logging.getLogger("telethon.network").addFilter(LogFilter())
 logger = logging.getLogger("media_downloader")
-
-
-class _ErrorCaptureHandler(logging.Handler):
-    """Capture ERROR+ log records into _ERROR_LOG for debug reports."""
-
-    def emit(self, record: logging.LogRecord):
-        _ERROR_LOG.append(
-            {
-                "time": (
-                    record.asctime if hasattr(record, "asctime") else record.created
-                ),
-                "level": record.levelname,
-                "message": record.getMessage(),
-                "lineno": record.lineno,
-                "funcName": record.funcName,
-            }
-        )
-        # Keep only last 50
-        while len(_ERROR_LOG) > 50:
-            _ERROR_LOG.pop(0)
-
-
-_error_handler = _ErrorCaptureHandler()
-_error_handler.setLevel(logging.WARNING)
-logger.addHandler(_error_handler)
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 FAILED_IDS: dict = {}
@@ -82,8 +57,53 @@ UI_PROGRESS_HOOK = None
 # Mutex for chat entity resolution to prevent concurrent session access
 _VERIFY_LOCK = asyncio.Lock()
 
-# Captured error log for debug reports (max 50 entries)
-_ERROR_LOG: list = []
+
+def reset_runtime_state():
+    """Clear all global state dictionaries.
+
+    Call this before starting a new history download or monitor session
+    to prevent cross-mode data leaks.
+    """
+    PENDING_IDS.clear()
+    FAILED_IDS.clear()
+    DOWNLOADED_IDS.clear()
+    PROCESSED_IDS.clear()
+    CURRENT_BATCH_IDS.clear()
+    BACKLOG_ITERATED.clear()
+    BACKLOG_DONE.clear()
+    CHAT_TITLES.clear()
+
+
+def _get_chats_to_process(config: dict, *, raise_on_missing: bool = True) -> list:
+    """Extract the list of chat configs from the config dictionary.
+
+    Parameters
+    ----------
+    config: dict
+        Configuration dictionary.
+    raise_on_missing: bool
+        If ``True``, raises ``KeyError`` when neither ``chats`` list nor
+        ``chat_id`` key is found. Use ``False`` when the config has already
+        been validated (e.g. during graceful shutdown in ``main()``).
+
+    Returns
+    -------
+    list
+        List of per-chat config dictionaries.
+
+    Raises
+    ------
+    KeyError
+        If ``raise_on_missing`` is ``True`` and no chats configuration found.
+    """
+    chats_config = config.get("chats", [])
+    if chats_config:
+        return chats_config
+    if "chat_id" not in config and raise_on_missing:
+        raise KeyError(
+            "chat_id must be specified either in a chats list or globally."
+        )
+    return [config]
 
 
 def update_config(config: dict):
@@ -652,6 +672,65 @@ async def process_messages(  # pylint: disable=too-many-positional-arguments
     return last_message_id
 
 
+def _resolve_date_filters(
+    chat_conf: dict, global_config: dict
+) -> Tuple[Optional[datetime], Optional[datetime], Optional[int]]:
+    """Resolve date and message filters from chat and global config.
+
+    Parameters
+    ----------
+    chat_conf: dict
+        Per-chat configuration dictionary.
+    global_config: dict
+        Global configuration dictionary (fallback values).
+
+    Returns
+    -------
+    tuple[Optional[datetime], Optional[datetime], Optional[int]]
+        ``(start_date, end_date, max_messages)`` resolved with global
+        fallback.  Dates are timezone-aware UTC, or ``None``.
+    """
+    start_date_val = chat_conf.get(
+        "start_date", global_config.get("start_date")
+    )
+    if isinstance(start_date_val, str) and start_date_val.strip():
+        start_date = datetime.fromisoformat(start_date_val)
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+    elif isinstance(start_date_val, date):
+        start_date = datetime.combine(
+            start_date_val, datetime.min.time(), tzinfo=timezone.utc
+        )
+    else:
+        start_date = None
+
+    end_date_val = chat_conf.get(
+        "end_date", global_config.get("end_date")
+    )
+    if isinstance(end_date_val, str) and end_date_val.strip():
+        end_date = datetime.fromisoformat(end_date_val)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+    elif isinstance(end_date_val, date):
+        end_date = datetime.combine(
+            end_date_val, datetime.min.time(), tzinfo=timezone.utc
+        )
+    else:
+        end_date = None
+
+    max_messages_val = chat_conf.get(
+        "max_messages", global_config.get("max_messages")
+    )
+    if isinstance(max_messages_val, int):
+        max_messages: Optional[int] = max_messages_val
+    elif isinstance(max_messages_val, str) and max_messages_val.strip():
+        max_messages = int(max_messages_val)
+    else:
+        max_messages = None
+
+    return start_date, end_date, max_messages
+
+
 async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements  # NOSONAR
     client: TelegramClient,
     global_config: dict,
@@ -719,37 +798,7 @@ async def process_chat(  # pylint: disable=too-many-locals,too-many-branches,too
         "download_delay", global_config.get("download_delay", 20)
     )
 
-    start_date_val = chat_conf.get("start_date", global_config.get("start_date"))
-    if isinstance(start_date_val, str) and start_date_val.strip():
-        start_date = datetime.fromisoformat(start_date_val)
-        if start_date.tzinfo is None:
-            start_date = start_date.replace(tzinfo=timezone.utc)
-    elif isinstance(start_date_val, date):
-        start_date = datetime.combine(
-            start_date_val, datetime.min.time(), tzinfo=timezone.utc
-        )
-    else:
-        start_date = None
-
-    end_date_val = chat_conf.get("end_date", global_config.get("end_date"))
-    if isinstance(end_date_val, str) and end_date_val.strip():
-        end_date = datetime.fromisoformat(end_date_val)
-        if end_date.tzinfo is None:
-            end_date = end_date.replace(tzinfo=timezone.utc)
-    elif isinstance(end_date_val, date):
-        end_date = datetime.combine(
-            end_date_val, datetime.min.time(), tzinfo=timezone.utc
-        )
-    else:
-        end_date = None
-
-    max_messages_val = chat_conf.get("max_messages", global_config.get("max_messages"))
-    if isinstance(max_messages_val, int):
-        max_messages = max_messages_val
-    elif isinstance(max_messages_val, str) and max_messages_val.strip():
-        max_messages = int(max_messages_val)
-    else:
-        max_messages = None
+    start_date, end_date, max_messages = _resolve_date_filters(chat_conf, global_config)
 
     download_directory_val = chat_conf.get(
         "download_directory", global_config.get("download_directory")
@@ -930,36 +979,17 @@ async def begin_monitor(config: dict) -> TelegramClient:
     TelegramClient
         Connected Telethon client with listeners registered.
     """
-    proxy = config.get("proxy")
-    proxy_dict = None
-    if proxy:
-        proxy_dict = {
-            "proxy_type": proxy["scheme"],
-            "addr": proxy["hostname"],
-            "port": proxy["port"],
-            "username": proxy.get("username"),
-            "password": proxy.get("password"),
-        }
-    client = TelegramClient(
-        "media_downloader",
+    client = build_telegram_client(
         api_id=config["api_id"],
         api_hash=config["api_hash"],
-        proxy=proxy_dict,
-        device_model=DEVICE_MODEL,
-        system_version=SYSTEM_VERSION,
-        app_version=APP_VERSION,
-        lang_code=LANG_CODE,
     )
     await client.start()
 
-    chats_config = config.get("chats", [])
-    if not chats_config:
-        if "chat_id" not in config:
-            await client.disconnect()
-            raise KeyError(
-                "chat_id must be specified either in a chats list or globally."
-            )
-        chats_config = [config]
+    try:
+        chats_config = _get_chats_to_process(config)
+    except KeyError:
+        await client.disconnect()
+        raise
 
     for chat_conf in chats_config:
         await register_monitor_handler(client, config, chat_conf)
@@ -987,25 +1017,9 @@ async def check_account_premium(config: dict):
         Returns ``None`` if unable to connect.
     """
     try:
-        proxy = config.get("proxy")
-        proxy_dict = None
-        if proxy:
-            proxy_dict = {
-                "proxy_type": proxy["scheme"],
-                "addr": proxy["hostname"],
-                "port": proxy["port"],
-                "username": proxy.get("username"),
-                "password": proxy.get("password"),
-            }
-        client = TelegramClient(
-            "media_downloader",
+        client = build_telegram_client(
             api_id=config["api_id"],
             api_hash=config["api_hash"],
-            proxy=proxy_dict,
-            device_model=DEVICE_MODEL,
-            system_version=SYSTEM_VERSION,
-            app_version=APP_VERSION,
-            lang_code=LANG_CODE,
         )
         await client.start()
         me = await client.get_me()
@@ -1044,15 +1058,7 @@ async def resolve_chat_entity(
     async with _VERIFY_LOCK:
         client = None
         try:
-            client = TelegramClient(
-                "media_downloader",
-                api_id=api_id,
-                api_hash=api_hash,
-                device_model=DEVICE_MODEL,
-                system_version=SYSTEM_VERSION,
-                app_version=APP_VERSION,
-                lang_code=LANG_CODE,
-            )
+            client = build_telegram_client(api_id=api_id, api_hash=api_hash)
             await client.connect()
             if not await client.is_user_authorized():
                 return None
@@ -1103,14 +1109,8 @@ async def get_user_dialogs(
     async with _VERIFY_LOCK:
         try:
             if _client is None or not await _client.is_user_authorized():
-                own_client = TelegramClient(
-                    "media_downloader",
-                    api_id=api_id,
-                    api_hash=api_hash,
-                    device_model=DEVICE_MODEL,
-                    system_version=SYSTEM_VERSION,
-                    app_version=APP_VERSION,
-                    lang_code=LANG_CODE,
+                own_client = build_telegram_client(
+                    api_id=api_id, api_hash=api_hash
                 )
                 await own_client.connect()
                 if not await own_client.is_user_authorized():
@@ -1161,15 +1161,7 @@ async def send_auth_code(api_id: int, api_hash: str, phone: str) -> dict:
         or ``{"error": str}`` on failure.
     """
     try:
-        client = TelegramClient(
-            "media_downloader",
-            api_id=api_id,
-            api_hash=api_hash,
-            device_model=DEVICE_MODEL,
-            system_version=SYSTEM_VERSION,
-            app_version=APP_VERSION,
-            lang_code=LANG_CODE,
-        )
+        client = build_telegram_client(api_id=api_id, api_hash=api_hash)
         await client.connect()
         result = await client.send_code_request(phone)
         return {"phone_code_hash": result.phone_code_hash, "client": client}
@@ -1228,45 +1220,16 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
     dict
         Updated configuration to be written into config file.
     """
-    proxy = config.get("proxy")
-    proxy_dict = None
-    if proxy:
-        proxy_dict = {
-            "proxy_type": proxy["scheme"],
-            "addr": proxy["hostname"],
-            "port": proxy["port"],
-            "username": proxy.get("username"),
-            "password": proxy.get("password"),
-        }
-    client = TelegramClient(
-        "media_downloader",
+    client = build_telegram_client(
         api_id=config["api_id"],
         api_hash=config["api_hash"],
-        proxy=proxy_dict,
-        device_model=DEVICE_MODEL,
-        system_version=SYSTEM_VERSION,
-        app_version=APP_VERSION,
-        lang_code=LANG_CODE,
     )
     await client.start()
     if client_ref is not None:
         client_ref["client"] = client
 
     # Extract chats format configuration
-    chats_config = config.get("chats", [])
-    if not chats_config:
-        # Backward compatibility for legacy config format
-        logger.info("Using legacy single-chat configuration format.")
-        if "chat_id" not in config:
-            raise KeyError(
-                "chat_id must be specified either in a chats list or globally."
-            )
-
-        # In legacy mode, processing directly on the global config might be safer, but
-        # using the process_chat flow is strictly better for logic reuse.
-        chats_to_process = [config]
-    else:
-        chats_to_process = chats_config
+    chats_to_process = _get_chats_to_process(config)
 
     parallel_chats = config.get("parallel_chats", False)
     config_write_lock = asyncio.Lock()
@@ -1341,11 +1304,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
         )
 
         # Accurately calculate the safe resumption point for each chat
-        chats_config = updated_config.get("chats", [])
-        if not chats_config:
-            chats_to_process = [updated_config]
-        else:
-            chats_to_process = chats_config
+        chats_to_process = _get_chats_to_process(updated_config, raise_on_missing=False)
 
         for chat_conf in chats_to_process:
             chat_id = chat_conf.get("chat_id")

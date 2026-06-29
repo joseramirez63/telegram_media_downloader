@@ -202,8 +202,8 @@ class TestBeginMonitor(unittest.TestCase):
     def test_missing_chat_id_raises(self):
         loop = self._loop
         conf = {"api_id": 1, "api_hash": "h"}
-        with mock.patch("media_downloader.TelegramClient") as mock_tc:
-            mock_tc.return_value = _make_client_mock()
+        with mock.patch("media_downloader.build_telegram_client") as mock_btc:
+            mock_btc.return_value = _make_client_mock()
             with self.assertRaises(KeyError):
                 loop.run_until_complete(begin_monitor(conf))
 
@@ -218,8 +218,8 @@ class TestBeginMonitor(unittest.TestCase):
             "media_downloader.register_monitor_handler",
             new_callable=mock.AsyncMock,
         ) as mock_reg:
-            with mock.patch("media_downloader.TelegramClient") as mock_tc:
-                mock_tc.return_value = _make_client_mock()
+            with mock.patch("media_downloader.build_telegram_client") as mock_btc:
+                mock_btc.return_value = _make_client_mock()
                 loop.run_until_complete(begin_monitor(conf))
                 self.assertEqual(mock_reg.call_count, 2)
 
@@ -230,33 +230,10 @@ class TestBeginMonitor(unittest.TestCase):
             "media_downloader.register_monitor_handler",
             new_callable=mock.AsyncMock,
         ) as mock_reg:
-            with mock.patch("media_downloader.TelegramClient") as mock_tc:
-                mock_tc.return_value = _make_client_mock()
+            with mock.patch("media_downloader.build_telegram_client") as mock_btc:
+                mock_btc.return_value = _make_client_mock()
                 loop.run_until_complete(begin_monitor(conf))
                 self.assertEqual(mock_reg.call_count, 1)
-
-    def test_proxy_config(self):
-        loop = self._loop
-        conf = {
-            "api_id": 1,
-            "api_hash": "h",
-            "chat_id": 123,
-            "proxy": {
-                "scheme": "socks5",
-                "hostname": "127.0.0.1",
-                "port": 1080,
-            },
-        }
-        with mock.patch("media_downloader.TelegramClient") as mock_tc:
-            mock_tc.return_value = _make_client_mock()
-            with mock.patch(
-                "media_downloader.register_monitor_handler",
-                new_callable=mock.AsyncMock,
-            ):
-                loop.run_until_complete(begin_monitor(conf))
-                call_kwargs = mock_tc.call_args[1]
-                self.assertIsNotNone(call_kwargs.get("proxy"))
-
 
 class TestMainMonitorMode(unittest.TestCase):
     """Tests for main() with monitor-related modes."""
