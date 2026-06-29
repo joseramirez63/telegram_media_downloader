@@ -307,14 +307,14 @@ def index():  # NOSONAR
                     build_history_tab(config, open_media, THIS_DIR)
 
                 with ui.tab_panel("terminal").style(_PADDING_0):
+                    with ui.column().style(
+                        "gap: 2px; margin-bottom: 28px; align-items: center;"
+                    ):
+                        ui.label("Terminal Output").classes("section-title")
+                        ui.label(
+                            "Real-time logs from downloads and monitor mode."
+                        ).classes("section-subtitle")
                     with ui.keep_alive():
-                        with ui.column().style(
-                            "gap: 2px; margin-bottom: 28px; align-items: center;"
-                        ):
-                            ui.label("Terminal Output").classes("section-title")
-                            ui.label(
-                                "Real-time logs from downloads and monitor mode."
-                            ).classes("section-subtitle")
                         log_area = (
                             ui.log(max_lines=500)
                             .classes("terminal-log")
