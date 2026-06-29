@@ -75,7 +75,6 @@ python3 webui.py
 |---|---|---|
 | `api_id` | — | Your Telegram API ID |
 | `api_hash` | — | Your Telegram API hash |
-| `mode` | `history` | `history` (backlog) · `monitor` (live) · `history_monitor` (both) |
 | `chat_id` | — | Target chat/channel (can also use `chats:` list) |
 | `media_types` | all 6 | `audio`, `document`, `photo`, `video`, `voice`, `video_note` |
 | `download_delay` | `20` | Seconds between files. Number for fixed, `[min, max]` for random, `null` to disable |
@@ -86,17 +85,17 @@ python3 webui.py
 
 ---
 
-## ▶️ Execution Modes
+## ▶️ Execution
 
-Set `mode` in `config.yaml`, or use the Execution tab buttons:
+Run the downloader with `python media_downloader.py` or use the **Start Download**
+button in the Web UI Execution tab:
 
-| Mode | CLI command | What it does |
-|---|---|---|
-| **history** (default) | `python media_downloader.py` | Downloads backlog, then exits |
-| **monitor** | (set `mode: monitor`) | Listens for new messages in real time |
-| **history_monitor** | (set `mode: history_monitor`) | Backlog first, then auto-switches to monitor |
+1. **Downloads backlog** — catches up on all past messages
+2. **Auto-switches to monitor** — listens for new incoming media in real time
 
-All modes respect `download_delay` and `max_concurrent_downloads`.
+Press `Ctrl+C` to stop gracefully (progress is saved). Respects `download_delay`
+and `max_concurrent_downloads`. To restart from the beginning, set
+`last_read_message_id: 0` in `config.yaml`. 
 
 ---
 

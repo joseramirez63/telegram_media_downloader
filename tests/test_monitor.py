@@ -6,7 +6,6 @@ import unittest
 from unittest import mock
 
 from media_downloader import (
-    VALID_MODES,
     _resolve_monitor_settings,
     begin_monitor,
     main,
@@ -288,31 +287,12 @@ class TestMainMonitorMode(unittest.TestCase):
         for p in patches:
             p.stop()
 
-    def test_mode_monitor(self):
-        """mode='monitor' is removed; falls back to 'history'."""
+    def test_main_flow(self):
         mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
             {
                 "api_id": 1,
                 "api_hash": "h",
                 "chat_id": 123,
-                "mode": "monitor",
-            }
-        )
-        try:
-            main()
-            mock_bi.assert_called_once()
-            mock_bm.assert_not_called()
-            mock_upd.assert_called()
-        finally:
-            self._teardown_mocks(patches)
-
-    def test_mode_history_monitor(self):
-        mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
-            {
-                "api_id": 1,
-                "api_hash": "h",
-                "chat_id": 123,
-                "mode": "history_monitor",
             }
         )
         try:
@@ -323,13 +303,12 @@ class TestMainMonitorMode(unittest.TestCase):
         finally:
             self._teardown_mocks(patches)
 
-    def test_mode_history_monitor_keyboard_interrupt_backlog(self):
+    def test_main_keyboard_interrupt(self):
         mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
             {
                 "api_id": 1,
                 "api_hash": "h",
                 "chat_id": 123,
-                "mode": "history_monitor",
             }
         )
         mock_bi.side_effect = KeyboardInterrupt()
@@ -340,60 +319,6 @@ class TestMainMonitorMode(unittest.TestCase):
             mock_upd.assert_called_once()
         finally:
             self._teardown_mocks(patches)
-
-    def test_mode_monitor_keyboard_interrupt(self):
-        """mode='monitor' is removed; falls back to 'history'."""
-        mock_bi, mock_bm, mock_upd, _, patches = self._setup_mocks(
-            {
-                "api_id": 1,
-                "api_hash": "h",
-                "chat_id": 123,
-                "mode": "monitor",
-            }
-        )
-        try:
-            main()
-            mock_bi.assert_called_once()
-            mock_bm.assert_not_called()
-            mock_upd.assert_called()
-        finally:
-            self._teardown_mocks(patches)
-
-    def test_mode_history_default_no_mode_in_config(self):
-        mock_bi, mock_bm, _, _, patches = self._setup_mocks(
-            {"api_id": 1, "api_hash": "h", "chat_id": 123}
-        )
-        try:
-            main()
-            mock_bi.assert_called_once()
-            mock_bm.assert_not_called()
-        finally:
-            self._teardown_mocks(patches)
-
-    def test_mode_unknown_falls_back(self):
-        mock_bi, mock_bm, _, _, patches = self._setup_mocks(
-            {
-                "api_id": 1,
-                "api_hash": "h",
-                "chat_id": 123,
-                "mode": "invalid_mode",
-            }
-        )
-        try:
-            main()
-            mock_bi.assert_called_once()
-            mock_bm.assert_not_called()
-        finally:
-            self._teardown_mocks(patches)
-
-
-class TestValidModes(unittest.TestCase):
-    """Trivial test to ensure VALID_MODES has expected values."""
-
-    def test_valid_modes(self):
-        self.assertIn("history", VALID_MODES)
-        self.assertIn("history_monitor", VALID_MODES)
-        self.assertEqual(len(VALID_MODES), 2)
 
 
 if __name__ == "__main__":

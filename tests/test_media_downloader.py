@@ -163,18 +163,25 @@ class MockVideoNote:
         self.attributes = []
 
 
+class _ConfigWithClient(dict):
+    """A dict that also has run_until_disconnected for monitor mode."""
+
+    def run_until_disconnected(self):
+        pass
+
+
 class MockEventLoop:
     def __init__(self):
         """Mock event loop; no initialization needed."""
 
     @staticmethod
     def run_until_complete(*args, **kwargs):
-        return {
+        return _ConfigWithClient({
             "api_id": 1,
             "api_hash": "asdf",
             "ids_to_retry": [1, 2, 3],
             "chat_id": 8654123,
-        }
+        })
 
 
 class MockAsync:
@@ -1352,9 +1359,10 @@ class MediaDownloaderTestCase(unittest.TestCase):
     @mock.patch("media_downloader.FAILED_IDS", {8654123: [2, 3], "123": [], 12345: []})
     @mock.patch("config_manager.load_config")
     @mock.patch("media_downloader.update_config", return_value=True)
+    @mock.patch("media_downloader.begin_monitor")
     @mock.patch("media_downloader.begin_import")
     @mock.patch("media_downloader.asyncio", new=MockAsync())
-    def test_main(self, mock_import, mock_update, mock_load):
+    def test_main(self, mock_import, mock_bm, mock_update, mock_load):
         conf = {
             "api_id": 1,
             "api_hash": "asdf",
@@ -1372,9 +1380,10 @@ class MediaDownloaderTestCase(unittest.TestCase):
     )
     @mock.patch("config_manager.load_config")
     @mock.patch("media_downloader.update_config", return_value=True)
+    @mock.patch("media_downloader.begin_monitor")
     @mock.patch("media_downloader.begin_import")
     @mock.patch("media_downloader.asyncio", new=MockAsync())
-    def test_main_with_failed_ids(self, mock_import, mock_update, mock_load):
+    def test_main_with_failed_ids(self, mock_import, mock_bm, mock_update, mock_load):
         """Test main function when FAILED_IDS contains items to cover logging"""
         conf = {
             "api_id": 1,

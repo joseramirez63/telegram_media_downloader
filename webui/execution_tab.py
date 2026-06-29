@@ -67,12 +67,9 @@ def build_execution_tab(  # NOSONAR
 
     # Shared state
     is_running = {"value": False}
-    is_monitoring = {"value": False}
     active_downloads = {}
     total_gb_label = None
-    monitor_client_ref = {"client": None}
     download_client_ref = {"client": None}
-    stop_monitoring_fn = {"fn": None}
     stop_download_fn = {"fn": None}
     empty_state_ref = {}
 
@@ -194,25 +191,16 @@ def build_execution_tab(  # NOSONAR
     # Buttons
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 4px;"):
         ui.button(
-            "Start History Download",
+            "Start Download",
             on_click=lambda: ui.timer(0.0, run_downloader, once=True),
             icon="play_arrow",
         ).props('unelevated color="primary"').style(
             "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
         )
-        ui.button(
-            "Start Monitoring",
-            on_click=lambda: ui.timer(0.0, run_monitor, once=True),
-            icon="radar",
-        ).props('unelevated color="info"').style(
-            "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
-        )
     with ui.row().style("gap: 8px; width: 100%; margin-bottom: 8px;"):
-        ui.label("Downloads backlog from the past").style(
-            "flex: 1; font-size: 10px; color: var(--text-tertiary);"
-            " text-align: center;"
-        )
-        ui.label("Listens for new incoming media").style(
+        ui.label(
+            "Downloads backlog then monitors for new media"
+        ).style(
             "flex: 1; font-size: 10px; color: var(--text-tertiary);"
             " text-align: center;"
         )
@@ -222,20 +210,6 @@ def build_execution_tab(  # NOSONAR
             ui.button(
                 "Stop Download",
                 on_click=lambda: stop_download_fn["fn"](),
-                icon="stop",
-            )
-            .props('outline color="negative"')
-            .style(
-                "flex: 1; height: 40px; font-size: 13px;"
-                " font-weight: 500; display: none;"
-            )
-        )
-
-    with ui.row().style("gap: 8px; width: 100%;"):
-        stop_btn = (
-            ui.button(
-                "Stop Monitoring",
-                on_click=lambda: stop_monitoring_fn["fn"](),
                 icon="stop",
             )
             .props('outline color="negative"')
@@ -424,13 +398,7 @@ def build_execution_tab(  # NOSONAR
         if is_running["value"]:
             ui.notify("Downloader is already running!", type="warning")
             return
-        if is_monitoring["value"]:
-            ui.notify(
-                "Stop monitoring before starting history download.", type="warning"
-            )
-            return
         is_running["value"] = True
-        switched_to_monitor = False
         media_downloader.reset_runtime_state()
         main_logger = logging.getLogger("media_downloader")
         main_logger.addHandler(ui_logger)
@@ -470,99 +438,43 @@ def build_execution_tab(  # NOSONAR
                     position="top",
                 )
             else:
-                update_status("Complete", "status-success")
+                _log_widget().push("Backlog complete. Switching to monitor mode...")
+                ui.notify("Switching to monitor mode...", type="info")
+                is_running["value"] = False
+                stop_dl_btn.style(_DISPLAY_NONE)
+                download_client_ref["client"] = None
+                # Start monitor phase
+                media_downloader.reset_runtime_state()
+                update_status("Monitoring", "status-monitoring")
+                ui.notify("Starting monitor mode...", type="info")
+                media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
+                fresh_config2 = load_config_fn()
+                client = await media_downloader.begin_monitor(fresh_config2)
+                download_client_ref["client"] = client
+                stop_dl_btn.style("display: block;")
+                _log_widget().push("Monitor active. Listening for new media...")
                 ui.notify(
-                    "Download complete!",
+                    "Monitor mode active. Listening for new messages...",
                     type="positive",
-                    position="top",
                 )
-                # Auto-switch to monitor if mode is history_monitor
-                fresh2 = load_config_fn()
-                if fresh2.get("mode") == "history_monitor":
-                    _log_widget().push("Backlog complete. Switching to monitor mode...")
-                    ui.notify("Switching to monitor mode...", type="info")
-                    switched_to_monitor = True
-                    is_running["value"] = False
-                    stop_dl_btn.style(_DISPLAY_NONE)
-                    download_client_ref["client"] = None
-                    await run_monitor()
-                    return
+                return
+            update_status("Complete", "status-success")
+            ui.notify("Download complete!", type="positive", position="top")
         except Exception as e:
             update_status("Error", "status-error")
             _log_widget().push(f"Error: {str(e)}")
             ui.notify(f"Error: {str(e)}", type="negative", position="top")
         finally:
-            if not switched_to_monitor:
+            if not is_running["value"]:
                 media_downloader.UI_PROGRESS_HOOK = None
-                is_running["value"] = False
                 main_logger.removeHandler(ui_logger)
                 stop_dl_btn.style(_DISPLAY_NONE)
                 download_client_ref["client"] = None
                 _update_empty_state()
-            # Save progress even on error/stop
+            is_running["value"] = False
             fresh = load_config_fn()
             media_downloader.update_config(fresh)
             update_total_gb()
-
-    async def run_monitor():
-        if is_monitoring["value"]:
-            ui.notify("Monitor is already running!", type="warning")
-            return
-        if is_running["value"]:
-            ui.notify(
-                "Wait for history download to finish before monitoring.", type="warning"
-            )
-            return
-        is_monitoring["value"] = True
-        media_downloader.reset_runtime_state()
-        main_logger = logging.getLogger("media_downloader")
-        main_logger.addHandler(ui_logger)
-        try:
-            _log_widget().clear()
-            progress_container.clear()
-            active_downloads.clear()
-            download_order.clear()
-            speed_byte_window.clear()
-            last_known_bytes.clear()
-            _update_empty_state()
-            update_status("Monitoring", "status-monitoring")
-            ui.notify("Starting monitor mode...", type="info")
-            media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
-            fresh_config = load_config_fn()
-            client = await media_downloader.begin_monitor(fresh_config)
-            monitor_client_ref["client"] = client
-            stop_btn.style("display: block;")
-            _log_widget().push("Monitor active. Listening for new media...")
-            ui.notify(
-                "Monitor mode active. Listening for new messages...",
-                type="positive",
-            )
-        except Exception as e:
-            is_monitoring["value"] = False
-            update_status("Error", "status-error")
-            _log_widget().push(f"Error: {str(e)}")
-            ui.notify(f"Error: {str(e)}", type="negative", position="top")
-            main_logger.removeHandler(ui_logger)
-
-    async def stop_monitoring():
-        if monitor_client_ref["client"] is not None:
-            try:
-                await monitor_client_ref["client"].disconnect()
-            except Exception:
-                pass
-            monitor_client_ref["client"] = None
-        is_monitoring["value"] = False
-        stop_btn.style(_DISPLAY_NONE)
-        update_status("Idle", "status-idle")
-        media_downloader.UI_PROGRESS_HOOK = None
-        main_logger = logging.getLogger("media_downloader")
-        try:
-            main_logger.removeHandler(ui_logger)
-        except Exception:
-            pass
-        ui.notify("Monitor stopped.", type="info")
-
-    stop_monitoring_fn["fn"] = stop_monitoring
 
     async def stop_download():
         if download_client_ref["client"] is not None:

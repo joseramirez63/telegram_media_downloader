@@ -50,8 +50,6 @@ BACKLOG_DONE: dict = {}
 # Resolved chat titles for display in download history
 CHAT_TITLES: dict = {}
 
-VALID_MODES = ("history", "history_monitor")
-
 # Global hook for Web UI to receive progress updates
 UI_PROGRESS_HOOK = None
 
@@ -1258,37 +1256,13 @@ async def begin_import(  # pylint: disable=too-many-locals,too-many-branches,too
     return config
 
 
-def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
-    """Main function of the downloader."""
+def main():  # pylint: disable=too-many-statements  # NOSONAR
+    """Main function of the downloader.
+
+    Always runs the full flow: download backlog first, then auto-switch
+    to real-time monitoring for new messages.
+    """
     config = config_manager.load_config()
-    mode = config.get("mode", "history")
-    if mode not in VALID_MODES:
-        logger.warning("Unknown mode %r in config; falling back to 'history'.", mode)
-        mode = "history"
-
-    if mode == "history_monitor":
-        updated_config = config
-        try:
-            updated_config = asyncio.get_event_loop().run_until_complete(
-                begin_import(config, pagination_limit=100)
-            )
-        except KeyboardInterrupt:
-            logger.warning("KeyboardInterrupt during backlog. Skipping monitor phase.")
-            update_config(updated_config)
-            return
-        update_config(updated_config)
-        logger.info("Backlog complete. Switching to Monitor mode...")
-        client = asyncio.get_event_loop().run_until_complete(
-            begin_monitor(updated_config)
-        )
-        try:
-            client.run_until_disconnected()
-        except KeyboardInterrupt:
-            logger.warning("KeyboardInterrupt received. Stopping monitor mode...")
-        update_config(updated_config)
-        return
-
-    # mode == "history" (legacy, exactly as before)
     updated_config = config
     try:
         updated_config = asyncio.get_event_loop().run_until_complete(
@@ -1310,16 +1284,13 @@ def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
                 processed = PROCESSED_IDS.get(chat_id, [])
                 unprocessed = [m_id for m_id in batch_ids if m_id not in processed]
                 if unprocessed:
-                    # Safe ID is just below the lowest unprocessed message.
-                    # IDs between this boundary and min(unprocessed) that were
-                    # already processed will be re-encountered on next run, but
-                    # the file-existence check prevents actual re-downloads.
                     safe_id = min(unprocessed) - 1
                     chat_conf["last_read_message_id"] = max(0, safe_id)
                 elif batch_ids:
-                    # All messages in batch were processed: resume after the
-                    # highest message so the next run starts beyond this batch.
                     chat_conf["last_read_message_id"] = max(batch_ids)
+
+        update_config(updated_config)
+        return
 
     total_failures = sum(len(set(fail_list)) for fail_list in FAILED_IDS.values())
     if total_failures > 0:
@@ -1329,6 +1300,15 @@ def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
             "These files will be downloaded on the next run.",
             total_failures,
         )
+    update_config(updated_config)
+    logger.info("Backlog complete. Switching to Monitor mode...")
+    client = asyncio.get_event_loop().run_until_complete(
+        begin_monitor(updated_config)
+    )
+    try:
+        client.run_until_disconnected()
+    except KeyboardInterrupt:
+        logger.warning("KeyboardInterrupt received. Stopping monitor mode...")
     update_config(updated_config)
 
 
