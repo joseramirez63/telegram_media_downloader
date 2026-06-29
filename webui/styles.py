@@ -172,5 +172,8 @@ body.body--dark .terminal-log { background: #020617 !important; border-color: #1
 /* Force tab panels to fill width */
 .q-tab-panels, .q-tab-panel, .q-panel.scroll { width: 100% !important; }
 .q-tab-panels .q-tab-panel > * { width: 100%; }
+
+/* Fix expansion click target after Tailwind 4 upgrade */
+.q-expansion-item__container { pointer-events: auto !important; }
 </style>
 """
