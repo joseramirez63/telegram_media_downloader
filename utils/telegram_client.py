@@ -37,4 +37,5 @@ def build_telegram_client(
         system_version=SYSTEM_VERSION,
         app_version=APP_VERSION,
         lang_code=LANG_CODE,
+        entity_cache_limit=50000,
     )
