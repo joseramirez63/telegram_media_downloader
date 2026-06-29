@@ -207,8 +207,7 @@ def build_execution_tab(  # NOSONAR
             )
             .props('outline color="negative"')
             .style(
-                "min-width: 80px; height: 48px; font-size: 13px;"
-                " font-weight: 500; display: none;"
+                "flex: 1; height: 48px; font-size: 14px; font-weight: 600;"
             )
         )
 
@@ -408,7 +407,6 @@ def build_execution_tab(  # NOSONAR
             start_btn.set_text("Downloading...")
             start_btn.props('color="grey"')
             start_btn.disable()
-            stop_btn.style("display: block;")
             ui.notify("Initializing Telegram Client...", type="info")
             media_downloader.UI_PROGRESS_HOOK = ui_progress_hook
             fresh_config = load_config_fn()
@@ -468,7 +466,6 @@ def build_execution_tab(  # NOSONAR
                 start_btn.set_text("Start Download")
                 start_btn.props('color="primary"')
                 start_btn.enable()
-                stop_btn.style("display: none;")
                 download_client_ref["client"] = None
                 _update_empty_state()
                 is_running["value"] = False
@@ -486,7 +483,6 @@ def build_execution_tab(  # NOSONAR
         start_btn.set_text("Start Download")
         start_btn.props('color="primary"')
         start_btn.enable()
-        stop_btn.style("display: none;")
         ui.notify("Download stopped. Progress saved.", type="info")
 
     stop_download_fn["fn"] = stop_download
