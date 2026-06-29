@@ -281,10 +281,6 @@ class TestMainMonitorMode(unittest.TestCase):
         mock_upd = p_upd.start()
         patches.append(p_upd)
 
-        p_cfu = mock.patch("media_downloader.check_for_updates")
-        p_cfu.start()
-        patches.append(p_cfu)
-
         return mock_bi, mock_bm, mock_upd, mock_client, patches
 
     @staticmethod

@@ -22,7 +22,6 @@ from utils.log import LogFilter
 from utils.meta import print_meta
 from utils.parsing import safe_int
 from utils.telegram_client import build_telegram_client
-from utils.updates import check_for_updates
 
 logging.basicConfig(
     level=logging.INFO,
@@ -1342,7 +1341,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements  # NOSONAR
             total_failures,
         )
     update_config(updated_config)
-    check_for_updates()
 
 
 if __name__ == "__main__":
