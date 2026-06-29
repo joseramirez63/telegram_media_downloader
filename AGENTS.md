@@ -573,3 +573,8 @@ Pattern that works every time:
   `pre-commit`. See `dev-requirements.txt` and `Makefile`.
 - **Python**: 3.10 minimum. All CI matrices use Python 3.10.
 - **Account badge**: temporarily removed from sidebar (caused session lock issues with `check_account_premium`).
+- **Wizard session cleanup**: `_finish()` in `setup_wizard.py` disconnects the
+  wizard client via `asyncio.ensure_future()` to release the session file.
+  Previously, `send_auth_code()` kept the client alive for subsequent wizard
+  steps (verify, browse dialogs) but never disconnected it, causing
+  `database is locked` when clicking Start Monitor immediately after setup.
