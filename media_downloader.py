@@ -292,8 +292,7 @@ def _progress_callback(current: int, total: int, pbar: tqdm) -> None:
         try:
             UI_PROGRESS_HOOK(pbar.desc, current, total)
         except RuntimeError:
-            UI_PROGRESS_HOOK = None
-            logger.warning("UI progress hook disconnected; running in headless mode.")
+            pass
         except Exception:
             UI_PROGRESS_HOOK = None
             logger.warning(
