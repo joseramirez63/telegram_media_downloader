@@ -4,14 +4,22 @@ Last updated: **2026-06-28**
 - Removed proxy support (simplified `build_telegram_client` helper)
 - Removed Debug tab and `utils/obfuscate.py` (unused functionality)
 - Removed built-in update checker (`utils/updates.py`)
+- Removed standalone monitor mode — single flow always history→monitor
 - Added `utils/telegram_client.py` with `build_telegram_client()` factory
 - Added `utils/parsing.py::safe_int()` and `utils/file_management.py::to_media_url()`
 - Added `_get_chats_to_process()`, `_resolve_date_filters()`, `reset_runtime_state()` helpers
 - Added `ActiveDownloadEntry` dataclass in execution_tab
+- Added Add Chat dialog in Configuration tab (with Browse/Verify, up to 3 chats)
+- Added Wizard Step 3 multi-chat support (up to 3 chats with pending list)
+- Added parallel downloads warning (toast + permanent label)
+- Redesigned Execution tab buttons (single row, dynamic text, same size)
 - Upgraded all dependencies (nicegui 3.13, telethon 1.44, rich 15.0, tqdm 4.68.3, cryptg 0.5.2)
 - Python 3.10 minimum, requirements unified into single `requirements.txt`
 - Account badge temporarily removed from sidebar
 - Suppressed `telethon.sessions` warnings, demoted `check_account_premium` log
+- Fixed wizard session cleanup (client disconnect on finish)
+- Fixed monitor `last_read_message_id` persistence
+- Fixed UI progress hook disable on RuntimeError (now retries)
 
 This file provides architectural context, coding guidelines, and project
 conventions for AI coding agents (Gemini, Copilot, Cursor, etc.) working on
