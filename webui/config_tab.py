@@ -748,7 +748,10 @@ def build_config_tab(config: dict, save_config_fn):  # NOSONAR
                     start = page * per_page
                     end = start + per_page
                     icon_map = {"channel": "campaign", "group": "groups", "bot": "smart_toy", "user": "person"}
+                    added_ids = {str(ci["chat_id"].value) for ci in chat_inputs if ci.get("chat_id")}
                     for d in dialogs[start:end]:
+                        if str(d["id"]) in added_ids:
+                            continue
                         with browse_list:
                             with ui.row().style("gap: 6px; align-items: center; width: 100%;"):
                                 ui.icon(icon_map.get(d["type"], "chat"), size="xs").style("color: var(--text-tertiary);")

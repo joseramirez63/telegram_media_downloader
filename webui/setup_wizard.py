@@ -460,7 +460,10 @@ def build_setup_wizard(  # NOSONAR
             start = page * per_page
             end = start + per_page
             page_items = dialogs[start:end]
+            added_ids = {pc["chat_id"] for pc in wizard_state["pending_chats"]}
             for d in page_items:
+                if str(d["id"]) in added_ids:
+                    continue
                 icon = {
                     "channel": "campaign",
                     "group": "groups",
